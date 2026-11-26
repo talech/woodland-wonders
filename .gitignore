@@ -1,0 +1,58 @@
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# --- Dependencies ---
+node_modules/
+.pnpm-store/
+
+# --- Build output ---
+dist/
+build/
+web-build/
+coverage/
+*.tsbuildinfo
+.turbo/
+
+# --- Expo / React Native ---
+.expo/
+.expo-shared/
+expo-env.d.ts
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.keystore
+!debug.keystore
+.metro-health-check*
+
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+credentials.json
+google-services.json
+GoogleService-Info.plist
+
+# --- Logs / temp ---
+*.log
+npm-debug.log*
+pnpm-debug.log*
+tmp/
+.cache/
+
+# --- Generator scratch output (curated content lives in packages/puzzle-content) ---
+generated/
+
+# --- Agent tooling (local only) ---
+.claude/settings.local.json
+.claude/worktrees/
