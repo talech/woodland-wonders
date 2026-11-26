@@ -9,13 +9,26 @@ export interface SpeciesTrayProps {
   /** Currently selected species tool, or null when another tool (e.g. empty) is active. */
   readonly selectedId: string | null;
   readonly onSelect: (id: string) => void;
+  /**
+   * Compact cards show art, glyph, name, count and habitat icon only; the full habitat hint stays in the
+   * accessibility label. Use when cards would be too narrow for the hint sentence.
+   */
+  readonly compact?: boolean;
+  /** Card flex-basis in pt. Grow it with the font scale so large text wraps cards, not words. */
+  readonly cardBasis?: number;
 }
 
 /**
- * Animal tray: one selectable tool per species with art, glyph, name, placed/target count and habitat hint.
- * Text wraps rather than truncating so large accessibility text sizes stay readable.
+ * Animal tray: one selectable tool per species. Card content is stacked vertically so names get the full card
+ * width; text is never truncated and wraps only at word boundaries.
  */
-export function SpeciesTray({ tools, selectedId, onSelect }: SpeciesTrayProps) {
+export function SpeciesTray({
+  tools,
+  selectedId,
+  onSelect,
+  compact = false,
+  cardBasis = 96,
+}: SpeciesTrayProps) {
   return (
     <View style={styles.tray} accessibilityRole="toolbar" accessibilityLabel="Animals">
       {tools.map((tool) => {
@@ -29,37 +42,41 @@ export function SpeciesTray({ tools, selectedId, onSelect }: SpeciesTrayProps) {
             accessibilityRole="button"
             accessibilityLabel={tool.accessibilityLabel}
             accessibilityState={{ selected }}
-            style={({ pressed }) => [styles.tool, selected && styles.selected, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.tool,
+              { flexBasis: cardBasis },
+              selected && styles.selected,
+              pressed && styles.pressed,
+            ]}
           >
-            <View style={styles.artWrap}>
-              <Art artKey={tool.art.artKey} color={tool.art.color} size={40} />
+            <View style={styles.topRow}>
+              <Art artKey={tool.art.artKey} color={tool.art.color} size={30} />
               <Text style={styles.glyph} importantForAccessibility="no" accessibilityElementsHidden>
                 {tool.art.glyph}
               </Text>
-            </View>
-            <View style={styles.body}>
-              <Text style={styles.name}>{tool.art.name}</Text>
-              <View style={styles.countRow}>
-                <Text
-                  style={[
-                    styles.count,
-                    status === 'satisfied' && styles.countDone,
-                    status === 'violated' && styles.countProblem,
-                  ]}
-                >
-                  {placed}/{target}
-                </Text>
-                {status === 'satisfied' && <CheckIcon size={16} />}
-                {status === 'violated' && <AlertIcon size={16} />}
-                {tool.statusText != null && <Text style={styles.problemText}>{tool.statusText}</Text>}
-              </View>
-              <View style={styles.hintRow}>
+              <View style={styles.spacer} />
+              <View style={styles.habitats} testID={`tool-${tool.id}-habitats`}>
                 {tool.habitats.map((h) => (
                   <Art key={h.artKey} artKey={h.artKey} color={h.color} size={18} />
                 ))}
-                <Text style={styles.hint}>{tool.habitatHint}</Text>
               </View>
             </View>
+            <Text style={styles.name}>{tool.art.name}</Text>
+            <View style={styles.countRow}>
+              <Text
+                style={[
+                  styles.count,
+                  status === 'satisfied' && styles.countDone,
+                  status === 'violated' && styles.countProblem,
+                ]}
+              >
+                {placed}/{target}
+              </Text>
+              {status === 'satisfied' && <CheckIcon size={16} />}
+              {status === 'violated' && <AlertIcon size={16} />}
+            </View>
+            {tool.statusText != null && <Text style={styles.problemText}>{tool.statusText}</Text>}
+            {!compact && tool.habitatHint !== '' && <Text style={styles.hint}>{tool.habitatHint}</Text>}
             {selected && (
               <View style={styles.selectedBadge}>
                 <CheckIcon size={18} color={palette.honey} />
@@ -76,11 +93,9 @@ const styles = StyleSheet.create({
   tray: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tool: {
     flexGrow: 1,
-    flexBasis: 104,
+    flexShrink: 0,
     minHeight: MIN_TOUCH,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    gap: 2,
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: radii.card,
@@ -90,16 +105,16 @@ const styles = StyleSheet.create({
   },
   selected: { borderWidth: 3, borderColor: palette.honey, backgroundColor: palette.honeySoft },
   pressed: { opacity: 0.85 },
-  artWrap: { alignItems: 'center' },
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  spacer: { flexGrow: 1 },
   glyph: { fontSize: 12, fontWeight: '800', color: palette.bark },
-  body: { flexShrink: 1, gap: 1 },
+  habitats: { flexDirection: 'row', gap: 2 },
   name: { fontSize: 15, fontWeight: '700', color: palette.bark },
-  countRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
+  countRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   count: { fontSize: 15, fontWeight: '800', color: palette.bark, fontVariant: ['tabular-nums'] },
   countDone: { color: palette.moss },
   countProblem: { color: palette.berry },
   problemText: { fontSize: 12, fontWeight: '600', color: palette.berry },
-  hintRow: { flexDirection: 'row', alignItems: 'center', gap: 3, flexWrap: 'wrap' },
-  hint: { fontSize: 12, color: palette.barkSoft, flexShrink: 1 },
-  selectedBadge: { position: 'absolute', top: -7, right: -7 },
+  hint: { fontSize: 12, color: palette.barkSoft },
+  selectedBadge: { position: 'absolute', top: -9, right: -9 },
 });
