@@ -23,7 +23,7 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 | M0b-2 | puzzle-core: contracts, ruleset, constraints, actions, history, tests | done (`18af3ff`) | director | packages/puzzle-core | — | main | M0b-1 |
 | M0b-3 | Fixtures, seed catalog, presentation config, boundary check | done (`b78c9ab`) | director | core/testing, puzzle-content, scripts | — | main | M0b-2 |
 | M1-B | Solver: deduction, hints, search, oracle ([packet](tasks/M1-B-solver.md)) | **in progress** | agent (lane B) | packages/puzzle-solver | `b78c9ab` | `agent/m1/solver` · `../woodland-wonders.worktrees/m1-solver` | core |
-| M1-C | Playable game UI ([packet](tasks/M1-C-player.md)) | **in progress** | agent (lane C) | apps/game, packages/game-ui, assets | `b78c9ab` | `agent/m1/player` · `../woodland-wonders.worktrees/m1-player` | core, content |
+| M1-C | Playable game UI ([packet](tasks/M1-C-player.md)) | **integrated** (merge after `2ce0f42`); review fixes in progress (M1-C.1) | agent (lane C) | apps/game, packages/game-ui, assets | `b78c9ab` | `agent/m1/player` · `../woodland-wonders.worktrees/m1-player` | core, content |
 | M1-D | Puzzle editor + content add tooling ([packet](tasks/M1-D-editor.md)) | **integrated** `934bf49` | agent (lane D) | apps/puzzle-editor, packages/puzzle-content | `b78c9ab` | `agent/m1/editor` · `../woodland-wonders.worktrees/m1-editor` | core |
 | M1-I | Integrate B/C/D, Playwright web smoke, M1 review gates | pending | director | root | — | main | M1-B, M1-C, M1-D |
 | M2-B2 | Seeded generator + CLI, depth objectives | pending | lane B | packages/puzzle-generator | — | — | M1-B |
@@ -37,7 +37,7 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 | Path | Branch | Base | Status |
 |---|---|---|---|
 | `../woodland-wonders.worktrees/m1-solver` | `agent/m1/solver` | `b78c9ab` | lane B working |
-| `../woodland-wonders.worktrees/m1-player` | `agent/m1/player` | `b78c9ab` | lane C working |
+| `../woodland-wonders.worktrees/m1-player` | `agent/m1/player` | `b78c9ab` (+ merged `2ce0f42`) | lane C: M1-C.1 review fixes |
 
 ## Decisions
 - Accepted: [ADR-0001](adr/0001-repository-workflow.md) … [ADR-0009](adr/0009-content-policy.md).
@@ -63,6 +63,14 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 | 2026-11-26 | `b78c9ab` | CI hygiene + verify (fresh Linux clone) | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45895320650)) |
 
 | 2026-11-26 | `934bf49` | After merging lane D: `pnpm verify` (93 Vitest + 1 Jest), editor build, Playwright 2/2 | pass |
+
+| 2026-11-26 | merge of lane C | `pnpm verify` (93 Vitest + 41 Jest), `smoke:native`, Playwright 6/6 (boot, full play-through of meadow-001 with violation + undo, 6×6 fit) at 360×640 and 390×844 | pass |
+
+**M1 product review (director, from Playwright screenshots at 360×640) — blocking, sent to lane C as M1-C.1:**
+1. The species tray breaks words mid-word with 3 species ("Mous/e"), and the hint text makes the cards tall.
+2. The toolbar (Mark empty / Undo / Redo) sits below the fold with the 6×6 board.
+
+Non-blocking: the app icon/splash are Expo template defaults; the completion is a panel plus hop rather than the GDD scene transition (M3); glyph ◒ may be missing on some Android fonts (SVG art still distinguishes).
 
 Deferred findings (lane D): no DOM component tests for the editor UI (model is unit-tested); a missing difficulty tier exports as `beginner` but sorts as `tutorial` in `add-puzzle`. Align in M2-D2.
 
