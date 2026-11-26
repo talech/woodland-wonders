@@ -1,0 +1,209 @@
+[
+  {
+    "schemaVersion": 1,
+    "id": "meadow-001",
+    "revision": 1,
+    "rulesetId": "woodland-v1",
+    "rows": 4,
+    "columns": 4,
+    "habitats": [
+      {
+        "row": 0,
+        "col": 3,
+        "habitat": "tree"
+      },
+      {
+        "row": 1,
+        "col": 1,
+        "habitat": "tree"
+      },
+      {
+        "row": 1,
+        "col": 3,
+        "habitat": "tree"
+      }
+    ],
+    "rowClues": [1, 0, 1, 0],
+    "columnClues": [0, 1, 1, 0],
+    "population": {
+      "fox": 2
+    },
+    "difficulty": {
+      "tier": "tutorial"
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "meadow-002",
+    "revision": 1,
+    "rulesetId": "woodland-v1",
+    "rows": 5,
+    "columns": 5,
+    "habitats": [
+      {
+        "row": 2,
+        "col": 1,
+        "habitat": "mushroom"
+      },
+      {
+        "row": 2,
+        "col": 3,
+        "habitat": "mushroom"
+      },
+      {
+        "row": 2,
+        "col": 4,
+        "habitat": "tree"
+      },
+      {
+        "row": 3,
+        "col": 1,
+        "habitat": "mushroom"
+      },
+      {
+        "row": 3,
+        "col": 3,
+        "habitat": "tree"
+      },
+      {
+        "row": 4,
+        "col": 1,
+        "habitat": "mushroom"
+      }
+    ],
+    "rowClues": [0, 1, 0, 2, 0],
+    "columnClues": [1, 0, 0, 1, 1],
+    "population": {
+      "mouse": 2,
+      "fox": 1
+    },
+    "difficulty": {
+      "tier": "beginner"
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "meadow-003",
+    "revision": 1,
+    "rulesetId": "woodland-v1",
+    "rows": 5,
+    "columns": 7,
+    "habitats": [
+      {
+        "row": 0,
+        "col": 4,
+        "habitat": "mushroom"
+      },
+      {
+        "row": 0,
+        "col": 5,
+        "habitat": "tree"
+      },
+      {
+        "row": 1,
+        "col": 3,
+        "habitat": "mushroom"
+      },
+      {
+        "row": 1,
+        "col": 4,
+        "habitat": "tree"
+      },
+      {
+        "row": 2,
+        "col": 6,
+        "habitat": "tree"
+      },
+      {
+        "row": 3,
+        "col": 4,
+        "habitat": "burrow"
+      },
+      {
+        "row": 4,
+        "col": 2,
+        "habitat": "tree"
+      },
+      {
+        "row": 4,
+        "col": 3,
+        "habitat": "burrow"
+      }
+    ],
+    "rowClues": [2, 0, 1, 1, 1],
+    "columnClues": [0, 1, 0, 2, 0, 1, 1],
+    "population": {
+      "mouse": 1,
+      "fox": 3,
+      "rabbit": 1
+    },
+    "difficulty": {
+      "tier": "intermediate"
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "meadow-004",
+    "revision": 1,
+    "rulesetId": "woodland-v1",
+    "rows": 6,
+    "columns": 6,
+    "habitats": [
+      {
+        "row": 0,
+        "col": 2,
+        "habitat": "tree"
+      },
+      {
+        "row": 1,
+        "col": 2,
+        "habitat": "burrow"
+      },
+      {
+        "row": 2,
+        "col": 3,
+        "habitat": "tree"
+      },
+      {
+        "row": 3,
+        "col": 0,
+        "habitat": "burrow"
+      },
+      {
+        "row": 3,
+        "col": 1,
+        "habitat": "tree"
+      },
+      {
+        "row": 3,
+        "col": 2,
+        "habitat": "mushroom"
+      },
+      {
+        "row": 3,
+        "col": 5,
+        "habitat": "tree"
+      },
+      {
+        "row": 5,
+        "col": 0,
+        "habitat": "mushroom"
+      },
+      {
+        "row": 5,
+        "col": 4,
+        "habitat": "mushroom"
+      }
+    ],
+    "rowClues": [1, 0, 3, 1, 3, 1],
+    "columnClues": [1, 2, 1, 3, 1, 1],
+    "population": {
+      "fox": 5,
+      "rabbit": 1,
+      "mouse": 3
+    },
+    "difficulty": {
+      "tier": "intermediate"
+    }
+  }
+]

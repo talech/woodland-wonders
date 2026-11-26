@@ -6,32 +6,36 @@ A cozy, mobile-first logic puzzle. Place woodland animals next to their habitats
 - Engineering contract: [AGENTS.md](AGENTS.md) · orchestration: [ORCHESTRATION.md](ORCHESTRATION.md)
 - Current state: [docs/STATUS.md](docs/STATUS.md) · decisions: [docs/adr/](docs/adr/)
 
-> **Status:** M0. The repository infrastructure is in place, and the architecture proposal is awaiting approval ([docs/M0-REVIEW.md](docs/M0-REVIEW.md)). The application workspace has not been scaffolded yet.
+> **Status:** M0b complete. The architecture is approved ([docs/M0-REVIEW.md](docs/M0-REVIEW.md), ADR-0002…0009). The rules engine (`@ww/puzzle-core`) is implemented and tested, and the other packages are scaffolded for parallel development. See [docs/STATUS.md](docs/STATUS.md).
 
-## Prerequisites (proposed, pending approval)
-- Node.js 24 LTS
-- pnpm (version pinned via `packageManager` in `package.json`)
-- Optional for native runs: Expo Go on a device; Xcode (iOS simulator) or a JDK + Android SDK (emulator)
+## Prerequisites
+- Node.js 24 LTS (`.nvmrc`). On macOS with Homebrew: `brew install node@24` and add `/opt/homebrew/opt/node@24/bin` to `PATH`.
+- pnpm via corepack: `corepack enable` (the version is pinned by `packageManager` in `package.json`).
+- Optional for native runs: Expo Go on a device; Xcode (iOS simulator) or a JDK + Android SDK (emulator).
+
+## Setup
+```sh
+corepack enable
+pnpm install --frozen-lockfile
+```
 
 ## Commands
-Available now:
+| Command | What it does |
+|---|---|
+| `pnpm verify` | Everything below in CI order. Must be green before integrating to `main`. |
+| `pnpm lint` / `pnpm format:check` | Biome lint / format check (`pnpm format` writes) |
+| `pnpm typecheck` | `tsc` in every workspace |
+| `pnpm check:boundaries` | Package dependency direction, public-export-only imports, gameplay bundle exclusions (ADR-0004) |
+| `pnpm test` | Vitest (packages, editor) + Jest/jest-expo (app) |
+| `pnpm content:validate` | Validates every shipped puzzle (uniqueness + deduction replay join once the solver lands) |
+| `pnpm build:web` | Expo web export to `apps/game/dist/web` |
+| `pnpm smoke:native` | iOS + Android Metro bundle export (no device needed) |
+| `bash scripts/check-hygiene.sh` | Tracked-file hygiene (also in CI) |
 
-```sh
-bash scripts/check-hygiene.sh   # tracked-file hygiene (also runs in CI)
-```
+Run the game: `pnpm --filter @ww/game start` (press `w` for web, or scan the QR code with Expo Go).
+Run the editor: `pnpm --filter @ww/puzzle-editor dev`.
 
-Planned once the workspace is scaffolded (exact definitions in docs/M0-REVIEW.md §7):
-
-```sh
-pnpm install --frozen-lockfile
-pnpm lint && pnpm format:check && pnpm typecheck
-pnpm test
-pnpm check:boundaries
-pnpm content:validate
-pnpm build:web
-pnpm smoke:native
-pnpm verify          # everything above, as CI runs it
-```
+Dependency changes are director-owned. Use `pnpm expo install <pkg>` inside `apps/game` for Expo-managed modules. pnpm refuses versions younger than 7 days (ADR-0002).
 
 ## Repository layout (target)
 ```

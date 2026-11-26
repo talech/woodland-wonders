@@ -1,3 +1,11 @@
 packages:
   - apps/*
   - packages/*
+
+# Supply-chain policy (ADR-0002): pnpm refuses any package version (direct or transitive) younger than 7 days.
+# Direct dependencies are additionally chosen from versions at least 14 days old.
+minimumReleaseAge: 10080
+
+# Dependency install scripts are blocked by default. @parcel/watcher ships prebuilt binaries; its script is not needed.
+allowBuilds:
+  "@parcel/watcher": false

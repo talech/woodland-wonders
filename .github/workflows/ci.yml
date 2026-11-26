@@ -29,5 +29,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # The `verify` job (install → lint → format:check → typecheck → test → content:validate → build:web)
-  # is added when the workspace is scaffolded after M0 architecture approval. See docs/M0-REVIEW.md §7.
+  verify:
+    name: Verify (lint, types, boundaries, tests, content, web build, native bundles)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pnpm (corepack, version from packageManager)
+        run: corepack enable && pnpm --version
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Verify
+        run: pnpm verify
+      - name: Native bundle smoke (iOS + Android Metro export)
+        run: pnpm smoke:native
