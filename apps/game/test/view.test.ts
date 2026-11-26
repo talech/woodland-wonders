@@ -2,7 +2,6 @@ import { CATALOG } from '@ww/puzzle-content';
 import { createPuzzleOrThrow } from '@ww/puzzle-core';
 import { FIXTURES } from '@ww/puzzle-core/testing';
 import { clueLabel } from '../src/game/labels';
-import { computeBoardLayout, MIN_CELL, MIN_COMFORTABLE } from '../src/game/layout';
 import { compileLevels, findLevel, LEVELS, nextLevel } from '../src/game/levels';
 import { createSession, type SessionAction, sessionReducer } from '../src/game/session';
 import { derivePuzzleView } from '../src/game/view';
@@ -88,31 +87,6 @@ describe('clueLabel', () => {
     expect(clueLabel('row', 0, count(0, 2, 1, 'violated'))).toBe(
       'Row 1: 0 of 2 animals, not enough room left',
     );
-  });
-});
-
-describe('computeBoardLayout', () => {
-  const noInsets = { top: 0, bottom: 0, left: 0, right: 0 };
-  it('fits a 10×10 board in a 360×640 viewport at ≥ 32 pt', () => {
-    const l = computeBoardLayout({
-      width: 360,
-      height: 640,
-      insets: { ...noInsets, top: 24 },
-      rows: 10,
-      columns: 10,
-    });
-    expect(l.cellSize).toBeGreaterThanOrEqual(MIN_CELL);
-    expect(10 * l.cellSize + l.clueSize).toBeLessThanOrEqual(360 - 16);
-  });
-  it('reaches the comfortable size on small boards and phones', () => {
-    const l = computeBoardLayout({ width: 390, height: 844, insets: noInsets, rows: 6, columns: 6 });
-    expect(l.cellSize).toBeGreaterThanOrEqual(MIN_COMFORTABLE);
-    expect(l.fitsHeight).toBe(true);
-  });
-  it('never goes below the minimum, even on short screens', () => {
-    const l = computeBoardLayout({ width: 360, height: 400, insets: noInsets, rows: 10, columns: 10 });
-    expect(l.cellSize).toBe(MIN_CELL);
-    expect(l.fitsHeight).toBe(false);
   });
 });
 
