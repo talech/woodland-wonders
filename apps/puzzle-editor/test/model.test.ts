@@ -147,7 +147,8 @@ describe('import / export', () => {
       const out = exportDefinitionJson(imp.value);
       if (!out.ok) throw new Error(`export ${def.id}: ${out.issues.join()}`);
       expect(JSON.parse(out.value)).toEqual(def);
-      expect(out.value).not.toMatch(/animal|solution/);
+      // No answer-key fields (provenance params like "animalDensity" are fine).
+      expect(out.value).not.toMatch(/"(solution|solutions|animals|marks|answer)"\s*:/);
     }
   });
 

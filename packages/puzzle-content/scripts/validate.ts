@@ -30,6 +30,18 @@ for (const def of puzzles) {
   }
   const puzzle = compiled.value;
 
+  // No answer keys in shipped content (ADR-0008): provenance params must be scalars, never mark arrays.
+  const nonScalar = Object.entries(def.provenance?.params ?? {}).filter(
+    ([, v]) => v !== null && typeof v === 'object',
+  );
+  if (nonScalar.length > 0) {
+    fail(
+      def.id,
+      `provenance.params must be scalar (possible answer key): ${nonScalar.map(([k]) => k).join(', ')}`,
+    );
+    continue;
+  }
+
   const found = search(puzzle, { nodeBudget: NODE_BUDGET });
   if (found.kind !== 'unique') {
     fail(def.id, `uniqueness: ${found.kind} (${found.nodes} nodes)`);
