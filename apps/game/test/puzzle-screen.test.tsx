@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { type CellMark, createPuzzleOrThrow, type Puzzle } from '@ww/puzzle-core';
 import { FIXTURES, type Fixture } from '@ww/puzzle-core/testing';
 import { PuzzleScreen } from '../src/features/PuzzleScreen';
@@ -45,6 +45,33 @@ describe('PuzzleScreen', () => {
     expect(screen.getByTestId('action-redo')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Hint, Coming soon' })).toBeDisabled();
     expect(screen.queryByTestId('scene-complete')).toBeNull();
+  });
+
+  it('keeps the toolbar in a fixed bar outside the scrolling region', async () => {
+    await renderPuzzle();
+    const scroll = screen.getByTestId('puzzle-scroll');
+    const bar = screen.getByTestId('puzzle-toolbar');
+    for (const id of ['action-undo', 'action-redo', 'tool-empty']) {
+      expect(within(scroll).queryByTestId(id)).toBeNull();
+      expect(within(bar).getByTestId(id)).toBeOnTheScreen();
+    }
+    expect(within(scroll).getByTestId('board')).toBeOnTheScreen();
+    expect(within(bar).getByRole('button', { name: /^Undo/ })).toBeOnTheScreen();
+  });
+
+  it('sizes the board from the measured space above the toolbar', async () => {
+    await renderPuzzle();
+    const layout = (height: number) => ({ nativeEvent: { layout: { x: 0, y: 0, width: 360, height } } });
+    await fireEvent(screen.getByTestId('puzzle-chrome'), 'layout', layout(150));
+    await fireEvent(screen.getByTestId('puzzle-scroll'), 'layout', layout(520));
+    // 520 − 150 − 32 padding = 338 → 5 rows × cell + clue(0.7·cell) ≤ 338 → cell 59.
+    expect(cell(0)).toHaveStyle({ width: 59, height: 59 });
+    await fireEvent(screen.getByTestId('puzzle-scroll'), 'layout', layout(380));
+    // 198 → cell 34.
+    expect(cell(0)).toHaveStyle({ width: 34, height: 34 });
+    await fireEvent(screen.getByTestId('puzzle-scroll'), 'layout', layout(200));
+    // Too short: never below 32 pt; the region scrolls instead.
+    expect(cell(0)).toHaveStyle({ width: 32, height: 32 });
   });
 
   it('labels cells with a role, label and selected state', async () => {
@@ -153,6 +180,7 @@ describe('PuzzleScreen', () => {
     }
     expect(screen.getByTestId('scene-complete')).toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Scene complete!' })).toBeOnTheScreen();
+    expect(within(screen.getByTestId('puzzle-toolbar')).getByTestId('action-undo')).toBeEnabled();
     await fireEvent.press(screen.getByRole('button', { name: 'Next puzzle' }));
     expect(onNext).toHaveBeenCalledTimes(1);
     await fireEvent.press(screen.getByTestId('complete-back'));
