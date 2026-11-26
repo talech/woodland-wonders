@@ -3,7 +3,15 @@
 _Director-maintained. On resume: re-read this file, then reconcile with `git log`, `git worktree list` and CI._
 
 ## Current milestone
-**M1 — Playable (in progress).** M0 and M0b are complete. The architecture is approved (ADR-0002…0009); the foundation is green locally and in CI at `b78c9ab`. Lanes B, C and D are dispatched in parallel from that base.
+**M2 — Puzzle intelligence (in progress).** M0, M0b and **M1 are complete** (CI green at `09bf98d`). M2 lanes B2 (generator), C2 (hints) and D2 (editor solver panel) are dispatched in parallel; content curation (40 puzzles) follows B2.
+
+**M1 gate evidence:**
+- Handcrafted puzzles are playable in the browser with place, remove, empty-mark, undo/redo, local feedback and completion.
+- Playwright play-through passes at 360×640 and 390×844; jest flows 52/52; native bundles export.
+- The solver distinguishes zero/one/multiple/unknown, with oracle agreement on 600 random boards.
+- `content:validate` enforces uniqueness + deduction-only solve + replay.
+- Logic review: director read the tier-3 strategies; the oracle catches deliberately broken strategies.
+- Product review: screenshot findings fixed (M1-C.1).
 
 | Field | Value |
 |---|---|
@@ -22,13 +30,13 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 | M0b-1 | Workspace scaffold, tooling, CI verify | done (`b78c9ab`) | director | root, apps, package stubs | — | main | M0-2 |
 | M0b-2 | puzzle-core: contracts, ruleset, constraints, actions, history, tests | done (`18af3ff`) | director | packages/puzzle-core | — | main | M0b-1 |
 | M0b-3 | Fixtures, seed catalog, presentation config, boundary check | done (`b78c9ab`) | director | core/testing, puzzle-content, scripts | — | main | M0b-2 |
-| M1-B | Solver: deduction, hints, search, oracle ([packet](tasks/M1-B-solver.md)) | **in progress** | agent (lane B) | packages/puzzle-solver | `b78c9ab` | `agent/m1/solver` · `../woodland-wonders.worktrees/m1-solver` | core |
+| M1-B | Solver: deduction, hints, search, oracle ([packet](tasks/M1-B-solver.md)) | **integrated** `4981ae5` | agent (lane B) | packages/puzzle-solver | `b78c9ab` | `agent/m1/solver` · `../woodland-wonders.worktrees/m1-solver` | core |
 | M1-C | Playable game UI ([packet](tasks/M1-C-player.md)) | **integrated** incl. review fixes M1-C.1 (`b1f3b98`); product findings resolved, screenshot-verified | agent (lane C) | apps/game, packages/game-ui, assets | `b78c9ab` | `agent/m1/player` · `../woodland-wonders.worktrees/m1-player` | core, content |
 | M1-D | Puzzle editor + content add tooling ([packet](tasks/M1-D-editor.md)) | **integrated** `934bf49` | agent (lane D) | apps/puzzle-editor, packages/puzzle-content | `b78c9ab` | `agent/m1/editor` · `../woodland-wonders.worktrees/m1-editor` | core |
-| M1-I | Integrate B/C/D, Playwright web smoke, M1 review gates | pending | director | root | — | main | M1-B, M1-C, M1-D |
-| M2-B2 | Seeded generator + CLI, depth objectives | pending | lane B | packages/puzzle-generator | — | — | M1-B |
-| M2-D2 | Editor solver panel; content:validate uniqueness + replay | pending | lane D / director | editor, content | — | — | M1-B, M1-D |
-| M2-C2 | In-game hints | pending | lane C | apps/game, game-ui | — | — | M1-B, M1-C |
+| M1-I | Integrate B/C/D, Playwright web smoke, M1 review gates, real content gates | **done** `09bf98d` | director | root | — | main | M1-B, M1-C, M1-D |
+| M2-B2 | Seeded generator + CLI, depth objectives ([packet](tasks/M2-B2-generator.md)) | **in progress** | agent (lane B) | packages/puzzle-generator | see worktrees | `agent/m2/generator` | M1-B |
+| M2-D2 | Editor solver panel ([packet](tasks/M2-D2-editor-solver.md)); content:validate gates done by director in M1-I | **in progress** | agent (lane D) | apps/puzzle-editor | see worktrees | `agent/m2/editor-solver` | M1-B, M1-D |
+| M2-C2 | In-game hints ([packet](tasks/M2-C2-hints.md)) | **in progress** | agent (lane C) | apps/game, game-ui | see worktrees | `agent/m2/hints` | M1-B, M1-C |
 | M2-content | 40 curated puzzles | pending | director + lane D | puzzle-content data | — | — | M2-B2, M2-D2 |
 
 Integration order for M1: B (no consumers yet) → D (content API additive) → C (consumes content), then Playwright smoke.
@@ -36,7 +44,9 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 ## Active worktrees
 | Path | Branch | Base | Status |
 |---|---|---|---|
-| `../woodland-wonders.worktrees/m1-solver` | `agent/m1/solver` | `b78c9ab` | lane B working |
+| `../woodland-wonders.worktrees/m2-generator` | `agent/m2/generator` | (M2 base) | lane B2 |
+| `../woodland-wonders.worktrees/m2-hints` | `agent/m2/hints` | (M2 base) | lane C2 |
+| `../woodland-wonders.worktrees/m2-editor-solver` | `agent/m2/editor-solver` | (M2 base) | lane D2 |
 
 ## Decisions
 - Accepted: [ADR-0001](adr/0001-repository-workflow.md) … [ADR-0009](adr/0009-content-policy.md).
@@ -48,7 +58,7 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 1. **Branch protection** unavailable on the current GitHub plan (T9 accepted). Enforced by CI + director policy.
 2. **Native toolchains absent locally** (no Xcode simulator, no JDK). Native coverage = CI Metro bundle export for iOS/Android + manual Expo Go. Device runs are **unverified**.
 3. Node is keg-only: add `/opt/homebrew/opt/node@24/bin` to your shell `PATH` to run commands yourself.
-4. `content:validate` does not yet check uniqueness or deduction replay (explicit PENDING until M1-B integrates). The seed catalog's uniqueness was verified only by the M0 throwaway spike.
+4. All four seed puzzles need only tier-1 strategies (12–40 steps). This confirms the M0 shallowness risk; M2 generator bands must select for tier 2/3 depth.
 
 ## Verification evidence
 | Date | SHA | Check | Result |
@@ -61,6 +71,7 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 | 2026-11-26 | `b78c9ab` | `check:boundaries` negative test (5 planted violations detected) | pass |
 | 2026-11-26 | `b78c9ab` | CI hygiene + verify (fresh Linux clone) | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45895320650)) |
 
+| 2026-11-26 | `09bf98d` | After lane B: `pnpm verify` (161 Vitest + 52 Jest), `content:validate` 4/4 unique + deduced + replayed, negative probe (multi-solution) fails as expected, smoke:native, Playwright 6/6, CI | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45898272537)) |
 | 2026-11-26 | `934bf49` | After merging lane D: `pnpm verify` (93 Vitest + 1 Jest), editor build, Playwright 2/2 | pass |
 
 | 2026-11-26 | merge of lane C | `pnpm verify` (93 Vitest + 41 Jest), `smoke:native`, Playwright 6/6 (boot, full play-through of meadow-001 with violation + undo, 6×6 fit) at 360×640 and 390×844 | pass |
@@ -74,6 +85,6 @@ Non-blocking: the app icon/splash are Expo template defaults; the completion is 
 Deferred findings (lane D): no DOM component tests for the editor UI (model is unit-tested); a missing difficulty tier exports as `beginner` but sorts as `tutorial` in `add-puzzle`. Align in M2-D2.
 
 ## Next actions
-1. Lanes B/C/D report back; director reviews diffs against write scopes, integrates B → D → C, runs `pnpm verify` + `smoke:native` after each merge.
-2. Director adds the Playwright web smoke (phone viewports, large text) and runs the M1 logic/engineering/product review passes.
-3. Dispatch M2 tasks (generator, solver panel, hints, content).
+1. Lanes B2/C2/D2 report; director reviews scope, integrates (B2 → D2 → C2; disjoint scopes), runs verify + e2e + content gates after each.
+2. Director runs the generator per band, curates 40 diverse puzzles (Tutorial 4 · Beginner 8 · Easy 8 · Intermediate 12 · Advanced 8) via `pnpm content:add`, inspects them in the editor, and reports actual yield and depth distribution.
+3. M2 review passes (logic: generator claims; product: hint wording), then M3 (onboarding, progression, persistence, completion scene, accessibility, web build).
