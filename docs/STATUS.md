@@ -24,7 +24,7 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 | M0b-3 | Fixtures, seed catalog, presentation config, boundary check | done (`b78c9ab`) | director | core/testing, puzzle-content, scripts | — | main | M0b-2 |
 | M1-B | Solver: deduction, hints, search, oracle ([packet](tasks/M1-B-solver.md)) | **in progress** | agent (lane B) | packages/puzzle-solver | `b78c9ab` | `agent/m1/solver` · `../woodland-wonders.worktrees/m1-solver` | core |
 | M1-C | Playable game UI ([packet](tasks/M1-C-player.md)) | **in progress** | agent (lane C) | apps/game, packages/game-ui, assets | `b78c9ab` | `agent/m1/player` · `../woodland-wonders.worktrees/m1-player` | core, content |
-| M1-D | Puzzle editor + content add tooling ([packet](tasks/M1-D-editor.md)) | **in progress** | agent (lane D) | apps/puzzle-editor, packages/puzzle-content | `b78c9ab` | `agent/m1/editor` · `../woodland-wonders.worktrees/m1-editor` | core |
+| M1-D | Puzzle editor + content add tooling ([packet](tasks/M1-D-editor.md)) | **integrated** `934bf49` | agent (lane D) | apps/puzzle-editor, packages/puzzle-content | `b78c9ab` | `agent/m1/editor` · `../woodland-wonders.worktrees/m1-editor` | core |
 | M1-I | Integrate B/C/D, Playwright web smoke, M1 review gates | pending | director | root | — | main | M1-B, M1-C, M1-D |
 | M2-B2 | Seeded generator + CLI, depth objectives | pending | lane B | packages/puzzle-generator | — | — | M1-B |
 | M2-D2 | Editor solver panel; content:validate uniqueness + replay | pending | lane D / director | editor, content | — | — | M1-B, M1-D |
@@ -38,7 +38,6 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 |---|---|---|---|
 | `../woodland-wonders.worktrees/m1-solver` | `agent/m1/solver` | `b78c9ab` | lane B working |
 | `../woodland-wonders.worktrees/m1-player` | `agent/m1/player` | `b78c9ab` | lane C working |
-| `../woodland-wonders.worktrees/m1-editor` | `agent/m1/editor` | `b78c9ab` | lane D working |
 
 ## Decisions
 - Accepted: [ADR-0001](adr/0001-repository-workflow.md) … [ADR-0009](adr/0009-content-policy.md).
@@ -62,6 +61,10 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 | 2026-11-26 | `b78c9ab` | local `pnpm smoke:native`, editor `vite build`, frozen install | pass |
 | 2026-11-26 | `b78c9ab` | `check:boundaries` negative test (5 planted violations detected) | pass |
 | 2026-11-26 | `b78c9ab` | CI hygiene + verify (fresh Linux clone) | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45895320650)) |
+
+| 2026-11-26 | `934bf49` | After merging lane D: `pnpm verify` (93 Vitest + 1 Jest), editor build, Playwright 2/2 | pass |
+
+Deferred findings (lane D): no DOM component tests for the editor UI (model is unit-tested); a missing difficulty tier exports as `beginner` but sorts as `tutorial` in `add-puzzle`. Align in M2-D2.
 
 ## Next actions
 1. Lanes B/C/D report back; director reviews diffs against write scopes, integrates B → D → C, runs `pnpm verify` + `smoke:native` after each merge.
