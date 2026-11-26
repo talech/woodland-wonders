@@ -75,3 +75,45 @@ fieldset.palette {
   border: 0;
   padding: 0;
 }
+.cell {
+  position: relative;
+}
+.cell .cand {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 0.6rem;
+  line-height: 1;
+}
+.cell.ov-premise {
+  box-shadow: inset 0 0 0 3px #1565c0;
+}
+.cell.ov-affected {
+  box-shadow: inset 0 0 0 3px #ef6c00;
+}
+.cell.ov-differs {
+  box-shadow: inset 0 0 0 3px #6a1b9a;
+}
+.badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.25rem;
+  color: #fff;
+}
+.badge.ok {
+  background: #1b5e20;
+}
+.badge.no {
+  background: #b71c1c;
+}
+.trace button {
+  text-align: left;
+  margin-top: 0.25rem;
+}
+.trace button[aria-pressed="true"] {
+  outline: 3px solid #1565c0;
+}
+.elim {
+  font-size: 0.8rem;
+  color: #555;
+}

@@ -1,8 +1,11 @@
 import { CATALOG, HABITAT_PRESENTATION, SPECIES_PRESENTATION } from '@ww/puzzle-content';
 import { WOODLAND_V1 } from '@ww/puzzle-core';
-import { useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import {
+  type AnalysisResult,
+  type AnalysisView,
   adoptSolutionClues,
+  analyzeDefinition,
   canRedo,
   canUndo,
   clear,
@@ -17,6 +20,7 @@ import {
   type History,
   importDefinition,
   importDefinitionJson,
+  overlayFor,
   paint,
   redo,
   resize,
@@ -26,6 +30,7 @@ import {
   undo,
   validateDocument,
 } from './model/index.ts';
+import { SolverPanel } from './SolverPanel.tsx';
 
 type Action =
   | { type: 'paint'; cell: number; tool: Tool }
@@ -72,6 +77,27 @@ export function App() {
   const report = useMemo(() => validateDocument(doc), [doc]);
   const exported = useMemo(() => exportDefinitionJson(doc), [doc]);
   const clues = deriveDefinition(doc);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [view, setView] = useState<AnalysisView>({ kind: 'none' });
+  // Debounced: analysis never runs during render or keystrokes. Solving is independent of the painted
+  // animals, so only the derived definition (as JSON) is the dependency.
+  const definitionKey = JSON.stringify(report.definition);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the serialized definition
+  useEffect(() => {
+    if (report.definitionIssues.length > 0) {
+      setAnalysis(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setAnalysis(analyzeDefinition(report.definition));
+      setView({ kind: 'none' });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [definitionKey]);
+  const overlay = useMemo(
+    () => (analysis?.ok ? overlayFor(analysis.analysis, view, doc.cells.length) : []),
+    [analysis, view, doc.cells.length],
+  );
 
   const tools: { tool: Tool; label: string }[] = [
     ...WOODLAND_V1.habitats.map((h) => ({
@@ -211,16 +237,18 @@ export function App() {
                   const cell = doc.cells[i];
                   if (!cell) return null;
                   const bad = report.violationsByCell.has(i);
+                  const ov = overlay[i];
                   return (
                     <td key={i}>
                       <button
                         type="button"
-                        className={`cell ${cell.kind}${bad ? ' bad' : ''}`}
+                        className={`cell ${cell.kind}${bad ? ' bad' : ''}${ov && ov.role !== 'plain' ? ` ov-${ov.role}` : ''}`}
                         aria-label={`Row ${r + 1}, column ${c + 1}: ${labelOf(cell)}${bad ? ', violation' : ''}`}
                         onClick={() => dispatch({ type: 'paint', cell: i, tool })}
                       >
                         {glyphOf(cell)}
                         {bad ? '!' : ''}
+                        {ov?.text ? <small className="cand">{ov.text}</small> : null}
                       </button>
                     </td>
                   );
@@ -262,6 +290,14 @@ export function App() {
               : 'Definition valid; the painted solution does not solve it.'}
         </p>
       </section>
+
+      <SolverPanel
+        pending={report.definitionIssues.length === 0 && analysis === null}
+        invalid={report.definitionIssues.length > 0}
+        result={analysis}
+        view={view}
+        onView={setView}
+      />
 
       <section aria-label="Import and export" className="io">
         <h2>Import</h2>
