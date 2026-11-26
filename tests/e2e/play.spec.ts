@@ -41,5 +41,9 @@ test('largest seed board (6x6) fits the viewport width', async ({ page }, info) 
   const width = page.viewportSize()?.width ?? 0;
   expect(box && box.x + box.width).toBeLessThanOrEqual(width);
   expect(box?.width ?? 0).toBeGreaterThanOrEqual(32);
+  // Regression (M1-C.1): core controls reachable without scrolling; tray names never break mid-word.
+  await expect(page.getByLabel(/^Undo/)).toBeInViewport();
+  await expect(page.getByLabel(/^Mark empty|^Empty/).first()).toBeInViewport();
+  await expect(page.getByText('Mouse', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('04-6x6.png'), fullPage: true });
 });
