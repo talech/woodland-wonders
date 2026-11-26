@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Art } from './art.tsx';
-import { AlertIcon, EmptyMarkIcon, SparkleIcon } from './icons.tsx';
+import { AlertIcon, EmptyMarkIcon, HintIcon, SparkleIcon } from './icons.tsx';
 import { palette, radii } from './theme.ts';
 import type { CellModel } from './types.ts';
 
@@ -15,19 +15,29 @@ export interface CellProps {
 const GAP = 2;
 
 function CellImpl({ model, index, size, onPress }: CellProps) {
-  const { content, flagged, highlighted } = model;
+  const { content, flagged, highlighted, hint } = model;
   const inner = size - GAP * 2;
   const badge = Math.max(10, Math.round(size * 0.3));
   const glyphSize = Math.max(9, Math.round(size * 0.26));
   const isHabitat = content.kind === 'habitat';
 
   const ground =
-    content.kind === 'habitat' ? palette.soil : content.kind === 'animal' ? palette.card : palette.grass;
+    content.kind === 'habitat'
+      ? palette.soil
+      : content.kind === 'animal'
+        ? palette.card
+        : hint
+          ? palette.skySoft
+          : palette.grass;
   const ring = flagged
     ? { borderColor: palette.berry, borderWidth: 2, borderStyle: 'dashed' as const }
-    : highlighted
-      ? { borderColor: palette.honey, borderWidth: 3, borderStyle: 'solid' as const }
-      : { borderColor: palette.grassEdge, borderWidth: 1, borderStyle: 'solid' as const };
+    : hint === 'focus'
+      ? { borderColor: palette.sky, borderWidth: 3, borderStyle: 'solid' as const }
+      : hint === 'region'
+        ? { borderColor: palette.sky, borderWidth: 3, borderStyle: 'dotted' as const }
+        : highlighted
+          ? { borderColor: palette.honey, borderWidth: 3, borderStyle: 'solid' as const }
+          : { borderColor: palette.grassEdge, borderWidth: 1, borderStyle: 'solid' as const };
 
   return (
     <Pressable
@@ -36,6 +46,7 @@ function CellImpl({ model, index, size, onPress }: CellProps) {
       disabled={isHabitat}
       accessibilityRole="button"
       accessibilityLabel={model.accessibilityLabel}
+      {...(model.accessibilityHint ? { accessibilityHint: model.accessibilityHint } : {})}
       accessibilityState={{ disabled: isHabitat, selected: content.kind === 'animal' }}
       style={{ width: size, height: size, padding: GAP }}
     >
@@ -70,6 +81,11 @@ function CellImpl({ model, index, size, onPress }: CellProps) {
               <SparkleIcon size={badge} />
             </View>
           )}
+          {hint && (
+            <View style={[styles.badge, styles.bottomLeft]} testID={`cell-${index}-hint`}>
+              <HintIcon size={hint === 'focus' ? badge + 4 : badge} color={palette.sky} />
+            </View>
+          )}
           {flagged && (
             <View style={[styles.badge, styles.topRight]}>
               <AlertIcon size={badge} />
@@ -90,6 +106,8 @@ function sameCell(a: CellProps, b: CellProps): boolean {
     a.model.accessibilityLabel === b.model.accessibilityLabel &&
     a.model.flagged === b.model.flagged &&
     a.model.highlighted === b.model.highlighted &&
+    a.model.hint === b.model.hint &&
+    a.model.accessibilityHint === b.model.accessibilityHint &&
     a.model.content.kind === b.model.content.kind
   );
 }
@@ -109,4 +127,5 @@ const styles = StyleSheet.create({
   badge: { position: 'absolute' },
   topLeft: { left: -3, top: -3 },
   topRight: { right: -3, top: -3 },
+  bottomLeft: { left: -3, bottom: -3 },
 });

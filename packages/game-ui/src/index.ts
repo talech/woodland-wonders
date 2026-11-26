@@ -3,6 +3,7 @@ export { Art, type ArtProps, hasArt } from './art.tsx';
 export { Board, type BoardProps } from './Board.tsx';
 export { Cell, type CellProps } from './Cell.tsx';
 export { ClueLabel, type ClueLabelProps } from './ClueLabel.tsx';
+export { HintPanel, type HintPanelAction, type HintPanelProps, type HintPanelStep } from './HintPanel.tsx';
 export {
   AlertIcon,
   BackIcon,
@@ -23,4 +24,4 @@ export {
   type ToolbarProps,
 } from './Toolbar.tsx';
 export { MIN_TOUCH, palette, radii } from './theme.ts';
-export type { ArtSpec, CellContent, CellModel, ClueModel, SpeciesToolModel } from './types.ts';
+export type { ArtSpec, CellContent, CellHintMark, CellModel, ClueModel, SpeciesToolModel } from './types.ts';
