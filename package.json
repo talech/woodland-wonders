@@ -10,17 +10,19 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "typecheck": "pnpm -r --workspace-concurrency=4 run typecheck",
+    "typecheck": "tsc -p tsconfig.json && pnpm -r --workspace-concurrency=4 run typecheck",
     "test": "vitest run && pnpm --filter @ww/game run test",
     "test:watch": "vitest",
     "check:boundaries": "node scripts/check-boundaries.ts",
     "content:validate": "pnpm --filter @ww/puzzle-content run validate",
     "build:web": "pnpm --filter @ww/game run build:web",
     "smoke:native": "pnpm --filter @ww/game run smoke:native",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm check:boundaries && pnpm test && pnpm content:validate && pnpm build:web"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm check:boundaries && pnpm test && pnpm content:validate && pnpm build:web",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
+    "@playwright/test": "1.65.0",
     "@types/node": "24.19.2",
     "typescript": "6.0.3",
     "vitest": "5.1.0"
