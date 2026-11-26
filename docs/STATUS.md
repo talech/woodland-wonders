@@ -35,7 +35,7 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 | M1-D | Puzzle editor + content add tooling ([packet](tasks/M1-D-editor.md)) | **integrated** `934bf49` | agent (lane D) | apps/puzzle-editor, packages/puzzle-content | `b78c9ab` | `agent/m1/editor` · `../woodland-wonders.worktrees/m1-editor` | core |
 | M1-I | Integrate B/C/D, Playwright web smoke, M1 review gates, real content gates | **done** `09bf98d` | director | root | — | main | M1-B, M1-C, M1-D |
 | M2-B2 | Seeded generator + CLI, depth objectives ([packet](tasks/M2-B2-generator.md)) | **in progress** | agent (lane B) | packages/puzzle-generator | see worktrees | `agent/m2/generator` | M1-B |
-| M2-D2 | Editor solver panel ([packet](tasks/M2-D2-editor-solver.md)); content:validate gates done by director in M1-I | **in progress** | agent (lane D) | apps/puzzle-editor | see worktrees | `agent/m2/editor-solver` | M1-B, M1-D |
+| M2-D2 | Editor solver panel ([packet](tasks/M2-D2-editor-solver.md)); content:validate gates done by director in M1-I | **integrated** (merge of `66450f7`) | agent (lane D) | apps/puzzle-editor | f8e9e30 | — | M1-B, M1-D |
 | M2-C2 | In-game hints ([packet](tasks/M2-C2-hints.md)) | **in progress** | agent (lane C) | apps/game, game-ui | see worktrees | `agent/m2/hints` | M1-B, M1-C |
 | M2-content | 40 curated puzzles | pending | director + lane D | puzzle-content data | — | — | M2-B2, M2-D2 |
 
@@ -46,7 +46,6 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 |---|---|---|---|
 | `../woodland-wonders.worktrees/m2-generator` | `agent/m2/generator` | (M2 base) | lane B2 |
 | `../woodland-wonders.worktrees/m2-hints` | `agent/m2/hints` | (M2 base) | lane C2 |
-| `../woodland-wonders.worktrees/m2-editor-solver` | `agent/m2/editor-solver` | (M2 base) | lane D2 |
 
 ## Decisions
 - Accepted: [ADR-0001](adr/0001-repository-workflow.md) … [ADR-0009](adr/0009-content-policy.md).
@@ -81,6 +80,10 @@ Integration order for M1: B (no consumers yet) → D (content API additive) → 
 2. The toolbar (Mark empty / Undo / Redo) sits below the fold with the 6×6 board.
 
 Non-blocking: the app icon/splash are Expo template defaults; the completion is a panel plus hop rather than the GDD scene transition (M3); glyph ◒ may be missing on some Android fonts (SVG art still distinguishes).
+
+| 2026-11-26 | merge of D2 | `pnpm verify` (169 Vitest + 52 Jest), editor build, browser check of solver panel on meadow-004 (publishable, 1 solution, 40-step trace, step highlighting) | pass |
+
+Deferred findings (lane D2): importing a catalog puzzle flags every cell, because the painted-solution check runs against an empty painting (definitions carry no solution); the solver panel has no DOM tests; search runs on the main thread. Difficulty insight: 26/40 steps of meadow-004 are trivial `no-habitat` eliminations, so the generator must measure substantive steps (sent to B2).
 
 Deferred findings (lane D): no DOM component tests for the editor UI (model is unit-tested); a missing difficulty tier exports as `beginner` but sorts as `tutorial` in `add-puzzle`. Align in M2-D2.
 
