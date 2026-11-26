@@ -1,0 +1,9 @@
+# Common rules for every lane (read first)
+
+- **Environment:** run `export PATH=/opt/homebrew/opt/node@24/bin:$PATH` in every shell command. Work ONLY inside your worktree (absolute path given in your packet); `cd` to it in every command. Dependencies are already installed there.
+- **Read before coding:** root `AGENTS.md`, `docs/GDD.md` (relevant sections), `docs/M0-REVIEW.md` §6, the ADRs named in your packet, and `packages/puzzle-core/src/contracts/*` (frozen public contracts). Use core only via `@ww/puzzle-core` (and `@ww/puzzle-core/testing` in tests).
+- **Write scope:** edit only your allowed paths. Never edit any `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, root configs, CI, `docs/STATUS.md`, `docs/adr/**`, or `packages/puzzle-core/**`. You may not add dependencies. If you need any of these, stop that part and return a **change request** in your final report (what, why, alternatives).
+- **Git:** commit focused, logical increments on your branch with imperative messages prefixed by scope (`solver:`, `app:`, `editor:`, `content:`), ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never merge, rebase, push, reset --hard, or touch `main` or other branches/worktrees.
+- **Quality:** strict TS, no `any`, no unjustified casts or non-null assertions, no hidden global state, no ambient randomness. Never weaken or skip tests to get green. Every claim in your report must come from commands you actually ran.
+- **Verification before reporting:** from your worktree root run `pnpm exec biome check --write .` then `CI=1 pnpm verify` (and `pnpm smoke:native` if you touched apps/game or game-ui). All must pass.
+- **Final report (your last message):** status (done/partial/blocked) · commit SHAs · changed files (summary) · exact verification commands + results · test counts · contract-change requests · known limitations/risks · integration notes for the director.

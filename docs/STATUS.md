@@ -3,48 +3,67 @@
 _Director-maintained. On resume: re-read this file, then reconcile with `git log`, `git worktree list` and CI._
 
 ## Current milestone
-**M0 — Foundation.** Repository infrastructure is complete. **Waiting for human approval of [docs/M0-REVIEW.md](M0-REVIEW.md)** before contracts freeze and scaffolding begins (M0b).
+**M1 — Playable (in progress).** M0 and M0b are complete. The architecture is approved (ADR-0002…0009); the foundation is green locally and in CI at `b78c9ab`. Lanes B, C and D are dispatched in parallel from that base.
 
 | Field | Value |
 |---|---|
 | Integration branch | `main` |
-| Baseline SHA | `0b7a8df` (chore: initialize repository) |
+| Lane base SHA | `b78c9ab` |
 | Remote | `github.com/talech/woodland-wonders` (private) |
-| CI | `hygiene` job (tracked-file hygiene + gitleaks). `verify` job pending scaffold |
+| CI | `hygiene` + `verify` (frozen install → `pnpm verify` → `pnpm smoke:native`) |
 
 ## Task registry
 
-| ID | Task | Status | Owner | Scope | Base | Branch / worktree | Depends on |
+| ID | Task | Status | Owner | Write scope | Base | Branch / worktree | Depends on |
 |---|---|---|---|---|---|---|---|
-| M0-1 | Git init, hygiene, CI baseline, remote | done | director | root, .github, scripts | — | main | — |
-| M0-2 | Architecture & decision review | **awaiting approval** | human | docs/M0-REVIEW.md | — | — | M0-1 |
-| M0-3 | Install Node 24 LTS (T0) | blocked on approval | director | machine | — | — | M0-2 |
-| M0b-1 | Workspace scaffold + tooling + `verify` CI | not started | director | root | — | main | M0-2, M0-3 |
-| M0b-2 | Core contracts, ruleset, constraints, actions, history + tests | not started | director | packages/puzzle-core | — | main | M0b-1 |
-| M0b-3 | Fixture puzzles + lane dispatch dry-run | not started | director | packages/puzzle-content/fixtures | — | main | M0b-2 |
+| M0-1 | Git init, hygiene, CI baseline, remote | done | director | root | — | main | — |
+| M0-2 | Architecture & decision review | **approved** 2026-11-26 | human | docs | — | — | M0-1 |
+| M0-3 | Install Node 24 LTS (Homebrew `node@24`, keg-only) | done | director | machine | — | — | M0-2 |
+| M0b-1 | Workspace scaffold, tooling, CI verify | done (`b78c9ab`) | director | root, apps, package stubs | — | main | M0-2 |
+| M0b-2 | puzzle-core: contracts, ruleset, constraints, actions, history, tests | done (`18af3ff`) | director | packages/puzzle-core | — | main | M0b-1 |
+| M0b-3 | Fixtures, seed catalog, presentation config, boundary check | done (`b78c9ab`) | director | core/testing, puzzle-content, scripts | — | main | M0b-2 |
+| M1-B | Solver: deduction, hints, search, oracle ([packet](tasks/M1-B-solver.md)) | **in progress** | agent (lane B) | packages/puzzle-solver | `b78c9ab` | `agent/m1/solver` · `../woodland-wonders.worktrees/m1-solver` | core |
+| M1-C | Playable game UI ([packet](tasks/M1-C-player.md)) | **in progress** | agent (lane C) | apps/game, packages/game-ui, assets | `b78c9ab` | `agent/m1/player` · `../woodland-wonders.worktrees/m1-player` | core, content |
+| M1-D | Puzzle editor + content add tooling ([packet](tasks/M1-D-editor.md)) | **in progress** | agent (lane D) | apps/puzzle-editor, packages/puzzle-content | `b78c9ab` | `agent/m1/editor` · `../woodland-wonders.worktrees/m1-editor` | core |
+| M1-I | Integrate B/C/D, Playwright web smoke, M1 review gates | pending | director | root | — | main | M1-B, M1-C, M1-D |
+| M2-B2 | Seeded generator + CLI, depth objectives | pending | lane B | packages/puzzle-generator | — | — | M1-B |
+| M2-D2 | Editor solver panel; content:validate uniqueness + replay | pending | lane D / director | editor, content | — | — | M1-B, M1-D |
+| M2-C2 | In-game hints | pending | lane C | apps/game, game-ui | — | — | M1-B, M1-C |
+| M2-content | 40 curated puzzles | pending | director + lane D | puzzle-content data | — | — | M2-B2, M2-D2 |
+
+Integration order for M1: B (no consumers yet) → D (content API additive) → C (consumes content), then Playwright smoke.
 
 ## Active worktrees
-None. Worktree isolation verified 2026-11-26: `agent/m0/dryrun` at `../woodland-wonders.worktrees/m0-dryrun` from `0b7a8df`; lane commit `a513ab9` stayed isolated, `main` unchanged; worktree and branch removed. Policy: [ADR-0001](adr/0001-repository-workflow.md).
+| Path | Branch | Base | Status |
+|---|---|---|---|
+| `../woodland-wonders.worktrees/m1-solver` | `agent/m1/solver` | `b78c9ab` | lane B working |
+| `../woodland-wonders.worktrees/m1-player` | `agent/m1/player` | `b78c9ab` | lane C working |
+| `../woodland-wonders.worktrees/m1-editor` | `agent/m1/editor` | `b78c9ab` | lane D working |
 
 ## Decisions
-- Accepted: [ADR-0001](adr/0001-repository-workflow.md) repository workflow, branching and worktrees.
-- Pending human review: T0–T9, P1–P10 in [M0-REVIEW.md](M0-REVIEW.md).
-- Housekeeping: `docs/gdd.md` renamed to `docs/GDD.md` (case only) to match all references on case-sensitive filesystems.
+- Accepted: [ADR-0001](adr/0001-repository-workflow.md) … [ADR-0009](adr/0009-content-policy.md).
+- Expo held at 58.0.25 / expo-router 58.0.31 under the release-age policy. Re-align after 2026-12-10 (ADR-0002 notes).
+- `docs/gdd.md` renamed to `docs/GDD.md` (case only).
+- Biome excludes Markdown so human-authored docs are never reformatted.
 
-## Blockers
-1. **Node.js not installed locally** (T0). No JS tooling can run until resolved.
-2. **Branch protection** unavailable for private repos on the current GitHub plan (T9). Documented; enforced by policy + CI.
-3. **Native toolchains absent** (no Xcode simulator, no JDK). Native checks are limited to CI bundle smoke + manual Expo Go.
+## Blockers / limitations
+1. **Branch protection** unavailable on the current GitHub plan (T9 accepted). Enforced by CI + director policy.
+2. **Native toolchains absent locally** (no Xcode simulator, no JDK). Native coverage = CI Metro bundle export for iOS/Android + manual Expo Go. Device runs are **unverified**.
+3. Node is keg-only: add `/opt/homebrew/opt/node@24/bin` to your shell `PATH` to run commands yourself.
+4. `content:validate` does not yet check uniqueness or deduction replay (explicit PENDING until M1-B integrates). The seed catalog's uniqueness was verified only by the M0 throwaway spike.
 
 ## Verification evidence
-| Date | Check | Result |
-|---|---|---|
-| 2026-11-26 | `bash scripts/check-hygiene.sh` (local) | pass |
-| 2026-11-26 | CI `hygiene` on `0b7a8df` | pass: https://github.com/talech/woodland-wonders/actions/runs/45892820637 |
-| 2026-11-26 | Branch protection API on `main` | HTTP 403 "Upgrade to GitHub Pro or make this repository public" |
-| 2026-11-26 | Worktree isolation dry-run | pass |
-| 2026-11-26 | Rule feasibility spike (throwaway, not in repo) | results in M0-REVIEW.md §2 |
+| Date | SHA | Check | Result |
+|---|---|---|---|
+| 2026-11-26 | `0b7a8df` | CI hygiene | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45892820637)) |
+| 2026-11-26 | — | Branch protection API | HTTP 403 (plan limitation) |
+| 2026-11-26 | — | Worktree isolation dry-run | pass |
+| 2026-11-26 | `b78c9ab` | local `pnpm verify` (lint, format, typecheck ×7, boundaries, 68 Vitest + 1 Jest, content 4/4, web export) | pass |
+| 2026-11-26 | `b78c9ab` | local `pnpm smoke:native`, editor `vite build`, frozen install | pass |
+| 2026-11-26 | `b78c9ab` | `check:boundaries` negative test (5 planted violations detected) | pass |
+| 2026-11-26 | `b78c9ab` | CI hygiene + verify (fresh Linux clone) | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45895320650)) |
 
 ## Next actions
-1. Human: review and approve or amend docs/M0-REVIEW.md.
-2. Director: on approval, record ADR-0002…0009, install Node (T0), scaffold workspace (M0b-1), implement core (M0b-2), go green, then dispatch lanes B/C/D.
+1. Lanes B/C/D report back; director reviews diffs against write scopes, integrates B → D → C, runs `pnpm verify` + `smoke:native` after each merge.
+2. Director adds the Playwright web smoke (phone viewports, large text) and runs the M1 logic/engineering/product review passes.
+3. Dispatch M2 tasks (generator, solver panel, hints, content).
