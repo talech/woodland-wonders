@@ -109,3 +109,55 @@ export function trayIsCompact(availableWidth: number, toolCount: number, fontSca
 export function trayCardBasis(fontScale: number): number {
   return Math.round(96 * Math.min(2.2, Math.max(1, fontScale)));
 }
+
+/** Gap between the hint panel and the toolbar (must match PuzzleScreen styles). */
+export const HINT_PANEL_GAP = 8;
+export const MIN_HINT_PANEL = 168;
+export const MAX_HINT_PANEL = 300;
+
+export interface ScreenLayoutInput {
+  readonly availableWidth: number;
+  /** Scroll viewport height measured while the hint panel was closed, or null before first layout. */
+  readonly closedViewportHeight: number | null;
+  readonly chromeHeight: number | null;
+  readonly windowHeight: number;
+  readonly insets: Insets;
+  readonly rows: number;
+  readonly columns: number;
+  readonly fontScale: number;
+  readonly hintOpen: boolean;
+}
+
+export interface ScreenLayout {
+  readonly board: BoardLayout;
+  /** Fixed hint-panel height while open (its content scrolls inside), else null. */
+  readonly hintPanelHeight: number | null;
+}
+
+/**
+ * Board and hint-panel sizes. Closed: the board fits below header + tray. Open: the screen scrolls header + tray
+ * away and the panel takes the space the board doesn't need, within [MIN_HINT_PANEL, MAX_HINT_PANEL] (larger
+ * minimum for large text). If the minimum panel leaves too little room, the board shrinks (never below 32 pt)
+ * so it stays fully visible; it never grows when a hint opens. The panel height is fixed per board, so moving
+ * between hint stages never resizes anything.
+ */
+export function puzzleScreenLayout(input: ScreenLayoutInput): ScreenLayout {
+  const { availableWidth, rows, columns, fontScale, hintOpen } = input;
+  const closedViewport =
+    input.closedViewportHeight ??
+    input.windowHeight - input.insets.top - input.insets.bottom - ESTIMATED_TOOLBAR_HEIGHT;
+  const closed = computeBoardLayout({
+    availableWidth,
+    availableHeight: boardSpaceHeight({ ...input, viewportHeight: closedViewport }),
+    rows,
+    columns,
+  });
+  if (!hintOpen) return { board: closed, hintPanelHeight: null };
+
+  const room = closedViewport - SCROLL_PADDING_TOP - SCROLL_PADDING_BOTTOM - HINT_PANEL_GAP;
+  const boardHeight = rows * closed.cellSize + closed.clueSize;
+  const minPanel = Math.round(MIN_HINT_PANEL * Math.min(1.4, Math.max(1, fontScale)));
+  const panel = Math.min(MAX_HINT_PANEL, Math.max(minPanel, room - boardHeight));
+  const open = computeBoardLayout({ availableWidth, availableHeight: room - panel, rows, columns });
+  return { board: open.cellSize < closed.cellSize ? open : closed, hintPanelHeight: panel };
+}

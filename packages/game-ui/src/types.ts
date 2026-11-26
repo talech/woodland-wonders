@@ -16,8 +16,14 @@ export type CellContent =
   | { readonly kind: 'empty' }
   | { readonly kind: 'unmarked' };
 
+/** Part of the current hint: `region` = cells to look at, `focus` = the cell the hint concludes about. */
+export type CellHintMark = 'region' | 'focus' | null;
+
 export interface CellModel {
   readonly content: CellContent;
+  readonly hint: CellHintMark;
+  /** Screen-reader hint, e.g. "Part of the current hint". */
+  readonly accessibilityHint: string | null;
   /** Habitat accepted by the selected species (shown with a sparkle + ring). */
   readonly highlighted: boolean;
   /** Part of an immediate local contradiction (shown with an alert badge + dashed ring). */
@@ -27,6 +33,9 @@ export interface CellModel {
 
 export interface ClueModel {
   readonly count: CountStatus;
+  /** Constraint is part of the current hint (dotted ring + tinted ground). */
+  readonly hinted: boolean;
+  readonly accessibilityHint: string | null;
   readonly accessibilityLabel: string;
 }
 

@@ -31,7 +31,8 @@ function ClueLabelImpl({ model, axis, cellSize, clueSize, testID }: ClueLabelPro
       accessible
       accessibilityRole="text"
       accessibilityLabel={model.accessibilityLabel}
-      style={[styles.box, box, status === 'violated' && styles.violated]}
+      {...(model.accessibilityHint ? { accessibilityHint: model.accessibilityHint } : {})}
+      style={[styles.box, box, model.hinted && styles.hinted, status === 'violated' && styles.violated]}
     >
       <Text style={[styles.value, { fontSize, color }]} maxFontSizeMultiplier={1.3}>
         {target}
@@ -47,6 +48,12 @@ export const ClueLabel = memo(ClueLabelImpl);
 
 const styles = StyleSheet.create({
   box: { alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: 8 },
+  hinted: {
+    backgroundColor: palette.skySoft,
+    borderWidth: 2,
+    borderStyle: 'dotted',
+    borderColor: palette.sky,
+  },
   violated: { backgroundColor: palette.berrySoft },
   value: { fontWeight: '800', fontVariant: ['tabular-nums'], includeFontPadding: false },
 });

@@ -43,7 +43,8 @@ describe('PuzzleScreen', () => {
     expect(screen.getAllByTestId(/^cell-\d+$/)).toHaveLength(25);
     expect(screen.getByTestId('action-undo')).toBeDisabled();
     expect(screen.getByTestId('action-redo')).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Hint, Coming soon' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Hint/ })).toBeEnabled();
+    expect(screen.queryByTestId('hint-panel')).toBeNull();
     expect(screen.queryByTestId('scene-complete')).toBeNull();
   });
 

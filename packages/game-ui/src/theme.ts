@@ -26,6 +26,9 @@ export const palette = {
   /** Explicit "empty" mark. */
   pebble: '#8c7d6a',
   pebbleSoft: '#ece4d6',
+  /** Hint region (dusk blue; always paired with the acorn icon and a dotted/solid ring). */
+  sky: '#2c6a87',
+  skySoft: '#dcebf2',
   /** Habitat cell ground. */
   soil: '#efe3cc',
 } as const;

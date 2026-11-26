@@ -8,7 +8,6 @@ export interface ToolbarLabels {
   readonly undo: string;
   readonly redo: string;
   readonly hint: string;
-  readonly hintSoon: string;
 }
 
 export const DEFAULT_TOOLBAR_LABELS: ToolbarLabels = {
@@ -16,7 +15,6 @@ export const DEFAULT_TOOLBAR_LABELS: ToolbarLabels = {
   undo: 'Undo',
   redo: 'Redo',
   hint: 'Hint',
-  hintSoon: 'Coming soon',
 };
 
 export interface ToolbarProps {
@@ -26,8 +24,10 @@ export interface ToolbarProps {
   readonly onSelectEmpty: () => void;
   readonly onUndo: () => void;
   readonly onRedo: () => void;
-  /** Show a disabled "coming soon" hint slot. */
-  readonly showHintSlot?: boolean;
+  /** Request a hint. The hint button is omitted when not provided. */
+  readonly onHint?: () => void;
+  /** A hint is currently shown (selected state on the hint button). */
+  readonly hintActive?: boolean;
   readonly labels?: ToolbarLabels;
 }
 
@@ -73,7 +73,8 @@ export function Toolbar({
   onSelectEmpty,
   onUndo,
   onRedo,
-  showHintSlot = true,
+  onHint,
+  hintActive = false,
   labels = DEFAULT_TOOLBAR_LABELS,
 }: ToolbarProps) {
   const muted = palette.barkSoft;
@@ -100,13 +101,13 @@ export function Toolbar({
         onPress={onRedo}
         disabled={!canRedo}
       />
-      {showHintSlot && (
+      {onHint && (
         <ToolButton
           testID="action-hint"
           label={labels.hint}
-          sublabel={labels.hintSoon}
-          icon={<HintIcon size={24} />}
-          disabled
+          icon={<HintIcon size={24} color={palette.sky} />}
+          onPress={onHint}
+          selected={hintActive}
         />
       )}
     </View>
