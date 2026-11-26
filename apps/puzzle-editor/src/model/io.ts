@@ -1,3 +1,4 @@
+import { DEFAULT_TIER } from '@ww/puzzle-content';
 import { type PuzzleDefinition, parsePuzzleDefinition, type Result } from '@ww/puzzle-core';
 import { type CellContent, type EditorDocument, GRASS } from './document.ts';
 import { validateDocument } from './validate.ts';
@@ -28,7 +29,7 @@ export function documentFromDefinition(def: PuzzleDefinition): EditorDocument {
   return {
     id: def.id,
     revision: def.revision,
-    tier: def.difficulty?.tier ?? 'beginner',
+    tier: def.difficulty?.tier ?? DEFAULT_TIER,
     rulesetId: def.rulesetId,
     rows: def.rows,
     columns: def.columns,

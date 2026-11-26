@@ -10,6 +10,7 @@ export {
   SPECIES_PRESENTATION,
   type SpeciesPresentation,
 } from './presentation.ts';
+export { DEFAULT_TIER, TIER_ORDER } from './tier.ts';
 
 /** The shipped puzzle catalog, validated at load. */
 export const CATALOG = loadCatalog(raw);

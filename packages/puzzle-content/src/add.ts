@@ -1,16 +1,9 @@
-import {
-  createPuzzle,
-  type DifficultyTier,
-  type PuzzleDefinition,
-  parsePuzzleDefinition,
-  type Result,
-} from '@ww/puzzle-core';
+import { createPuzzle, type PuzzleDefinition, parsePuzzleDefinition, type Result } from '@ww/puzzle-core';
 import { loadCatalog } from './catalog.ts';
-
-const TIER_ORDER: readonly DifficultyTier[] = ['tutorial', 'beginner', 'easy', 'intermediate', 'advanced'];
+import { DEFAULT_TIER, TIER_ORDER } from './tier.ts';
 
 function tierRank(def: PuzzleDefinition): number {
-  const i = TIER_ORDER.indexOf(def.difficulty?.tier ?? 'tutorial');
+  const i = TIER_ORDER.indexOf(def.difficulty?.tier ?? DEFAULT_TIER);
   return i < 0 ? TIER_ORDER.length : i;
 }
 
