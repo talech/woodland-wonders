@@ -2,13 +2,13 @@ import {
   type CellMark,
   createPuzzle,
   evaluateBoard,
-  parsePuzzleDefinition,
   type Puzzle,
   type PuzzleDefinition,
+  parsePuzzleDefinition,
   type Violation,
 } from '@ww/puzzle-core';
-import type { EditorDocument } from './document.ts';
 import { deriveDefinition } from './derive.ts';
+import type { EditorDocument } from './document.ts';
 
 export interface ValidationReport {
   readonly definition: PuzzleDefinition;

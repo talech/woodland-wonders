@@ -1,4 +1,4 @@
-import { parsePuzzleDefinition, type PuzzleDefinition, type Result } from '@ww/puzzle-core';
+import { type PuzzleDefinition, parsePuzzleDefinition, type Result } from '@ww/puzzle-core';
 import { type CellContent, type EditorDocument, GRASS } from './document.ts';
 import { validateDocument } from './validate.ts';
 
