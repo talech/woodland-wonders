@@ -11,6 +11,7 @@ import {
   isSolved,
   type Puzzle,
 } from '@ww/puzzle-core';
+import { describeHint, HINT_A11Y, type HintDescription } from './hintText.ts';
 import { type CellIssue, cellLabel, clueLabel, countProblem, speciesToolLabel } from './labels.ts';
 import { habitatArt, speciesArt, speciesInfo } from './presentation.ts';
 import type { Session } from './session.ts';
@@ -22,6 +23,8 @@ export interface PuzzleView {
   readonly columnClues: readonly ClueModel[];
   readonly tools: readonly SpeciesToolModel[];
   readonly solved: boolean;
+  /** Text and highlights for the current hint, or null when no hint is shown. */
+  readonly hint: HintDescription | null;
 }
 
 const speciesName = (id: string) => speciesInfo(id).name;
@@ -60,6 +63,10 @@ export function derivePuzzleView(session: Session): PuzzleView {
   const issues = cellIssues(evaluation);
   const highlight = new Set(tool.kind === 'species' ? acceptedHabitats(puzzle, tool.species) : []);
   const names = { species: speciesName, habitat: habitatName };
+  const hint = session.hint ? describeHint(session.hint, puzzle) : null;
+  const hintMark = (cell: CellIndex) =>
+    hint === null ? null : hint.focus === cell ? 'focus' : hint.region.has(cell) ? 'region' : null;
+  const clueHinted = (id: string) => hint?.constraints.has(id) ?? false;
 
   const cells: CellModel[] = [];
   for (let i = 0; i < puzzle.cellCount; i++) {
@@ -67,7 +74,10 @@ export function derivePuzzleView(session: Session): PuzzleView {
     const row = Math.floor(i / puzzle.columns);
     const col = i % puzzle.columns;
     const cellIssueList = issues.get(i) ?? [];
+    const mark = hintMark(i);
     cells.push({
+      hint: mark,
+      accessibilityHint: mark === null ? null : HINT_A11Y[mark],
       content:
         view.kind === 'habitat'
           ? { kind: 'habitat', art: habitatArt(view.habitat) }
@@ -100,12 +110,20 @@ export function derivePuzzleView(session: Session): PuzzleView {
   return {
     evaluation,
     cells,
-    rowClues: evaluation.rows.map((count, r) => ({ count, accessibilityLabel: clueLabel('row', r, count) })),
+    rowClues: evaluation.rows.map((count, r) => ({
+      count,
+      hinted: clueHinted(`row:${r}`),
+      accessibilityHint: clueHinted(`row:${r}`) ? HINT_A11Y.region : null,
+      accessibilityLabel: clueLabel('row', r, count),
+    })),
     columnClues: evaluation.columns.map((count, c) => ({
       count,
+      hinted: clueHinted(`column:${c}`),
+      accessibilityHint: clueHinted(`column:${c}`) ? HINT_A11Y.region : null,
       accessibilityLabel: clueLabel('column', c, count),
     })),
     tools,
     solved: isSolved(puzzle, marks),
+    hint,
   };
 }

@@ -77,6 +77,7 @@ export const STRINGS = {
   completeMessage: 'Every animal has found a cosy spot.',
   next: 'Next puzzle',
   backToList: 'Back to levels',
+  closeHint: 'Close hint',
   notFoundTitle: 'This clearing is hidden',
   notFoundMessage: "We couldn't find that puzzle. It may have moved.",
 } as const;

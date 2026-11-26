@@ -2,8 +2,11 @@ import {
   boardSpaceHeight,
   computeBoardLayout,
   contentWidth,
+  MAX_HINT_PANEL,
   MIN_CELL,
   MIN_COMFORTABLE,
+  MIN_HINT_PANEL,
+  puzzleScreenLayout,
   trayCardBasis,
   trayIsCompact,
 } from '../src/game/layout';
@@ -99,5 +102,65 @@ describe('tray sizing', () => {
     expect(trayCardBasis(1)).toBe(96);
     expect(trayCardBasis(2)).toBeGreaterThan(trayCardBasis(1.3));
     expect(trayCardBasis(0.8)).toBe(96);
+  });
+});
+
+describe('puzzleScreenLayout with the hint panel', () => {
+  const base = {
+    availableWidth: contentWidth(360, noInsets),
+    chromeHeight: 210,
+    windowHeight: 640,
+    insets: noInsets,
+    rows: 6,
+    columns: 6,
+    fontScale: 1,
+    closedViewportHeight: 552,
+  };
+
+  it('closed: plain board layout and no panel', () => {
+    const l = puzzleScreenLayout({ ...base, hintOpen: false });
+    expect(l.hintPanelHeight).toBeNull();
+    expect(l.board).toEqual(
+      computeBoardLayout({
+        availableWidth: base.availableWidth,
+        availableHeight: boardSpaceHeight({ ...base, viewportHeight: 552 }),
+        rows: 6,
+        columns: 6,
+      }),
+    );
+  });
+
+  it('open: the panel takes the room the board does not need; the board keeps its size', () => {
+    const closed = puzzleScreenLayout({ ...base, hintOpen: false });
+    const open = puzzleScreenLayout({ ...base, hintOpen: true });
+    const panel = open.hintPanelHeight ?? 0;
+    expect(open.board).toEqual(closed.board);
+    expect(panel).toBeGreaterThanOrEqual(MIN_HINT_PANEL);
+    const viewport = 552 - panel - 8;
+    expect(6 * open.board.cellSize + open.board.clueSize).toBeLessThanOrEqual(viewport - 20);
+  });
+
+  it('open on a 10×10 board at 360×640: whole board above the panel', () => {
+    const open = puzzleScreenLayout({ ...base, rows: 10, columns: 10, hintOpen: true });
+    const panel = open.hintPanelHeight ?? 0;
+    expect(panel).toBeGreaterThanOrEqual(MIN_HINT_PANEL);
+    expect(open.board.cellSize).toBeGreaterThanOrEqual(MIN_CELL);
+    expect(10 * open.board.cellSize + open.board.clueSize).toBeLessThanOrEqual(552 - panel - 8 - 20);
+  });
+
+  it('panel height is bounded and larger for large text; the board shrinks rather than hides', () => {
+    const big = puzzleScreenLayout({ ...base, fontScale: 1.5, hintOpen: true });
+    expect(big.hintPanelHeight).toBeGreaterThan(MIN_HINT_PANEL);
+    const tall = puzzleScreenLayout({
+      ...base,
+      windowHeight: 1400,
+      closedViewportHeight: 1300,
+      hintOpen: true,
+    });
+    expect(tall.hintPanelHeight).toBe(MAX_HINT_PANEL);
+    const short = puzzleScreenLayout({ ...base, closedViewportHeight: 400, hintOpen: true });
+    const closedShort = puzzleScreenLayout({ ...base, closedViewportHeight: 400, hintOpen: false });
+    expect(short.board.cellSize).toBeLessThanOrEqual(closedShort.board.cellSize);
+    expect(short.board.cellSize).toBeGreaterThanOrEqual(MIN_CELL);
   });
 });
