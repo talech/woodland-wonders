@@ -8,7 +8,7 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 | Field | Value |
 |---|---|
 | Integration branch | `main` |
-| Integration SHA | see `git log -1 main` (baseline: "chore: initialize repository") |
+| Baseline SHA | `0b7a8df` (chore: initialize repository) |
 | Remote | `github.com/talech/woodland-wonders` (private) |
 | CI | `hygiene` job (tracked-file hygiene + gitleaks). `verify` job pending scaffold |
 
@@ -24,7 +24,7 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 | M0b-3 | Fixture puzzles + lane dispatch dry-run | not started | director | packages/puzzle-content/fixtures | — | main | M0b-2 |
 
 ## Active worktrees
-None. Worktree isolation was verified on 2026-11-26: created, committed in isolation, confirmed `main` unaffected, removed. Policy: [ADR-0001](adr/0001-repository-workflow.md).
+None. Worktree isolation verified 2026-11-26: `agent/m0/dryrun` at `../woodland-wonders.worktrees/m0-dryrun` from `0b7a8df`; lane commit `a513ab9` stayed isolated, `main` unchanged; worktree and branch removed. Policy: [ADR-0001](adr/0001-repository-workflow.md).
 
 ## Decisions
 - Accepted: [ADR-0001](adr/0001-repository-workflow.md) repository workflow, branching and worktrees.
@@ -40,7 +40,8 @@ None. Worktree isolation was verified on 2026-11-26: created, committed in isola
 | Date | Check | Result |
 |---|---|---|
 | 2026-11-26 | `bash scripts/check-hygiene.sh` (local) | pass |
-| 2026-11-26 | CI `hygiene` on baseline push | see GitHub Actions run linked in commit status |
+| 2026-11-26 | CI `hygiene` on `0b7a8df` | pass: https://github.com/talech/woodland-wonders/actions/runs/45892820637 |
+| 2026-11-26 | Branch protection API on `main` | HTTP 403 "Upgrade to GitHub Pro or make this repository public" |
 | 2026-11-26 | Worktree isolation dry-run | pass |
 | 2026-11-26 | Rule feasibility spike (throwaway, not in repo) | results in M0-REVIEW.md §2 |
 
