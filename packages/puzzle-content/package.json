@@ -9,7 +9,8 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "validate": "node scripts/validate.ts"
+    "validate": "node scripts/validate.ts",
+    "add": "node scripts/add-puzzle.ts"
   },
   "dependencies": {
     "@ww/puzzle-core": "workspace:*"

@@ -18,7 +18,8 @@
     "build:web": "pnpm --filter @ww/game run build:web",
     "smoke:native": "pnpm --filter @ww/game run smoke:native",
     "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm check:boundaries && pnpm test && pnpm content:validate && pnpm build:web",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "content:add": "pnpm --filter @ww/puzzle-content run add"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
