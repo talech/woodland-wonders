@@ -47,7 +47,7 @@ Director-maintained. Reconcile with Git and CI on resume; historical evidence is
 - Public hosting authorized by the owner; repository visibility confirmed public.
 - CI exports a separate `/woodland-wonders` web build after normal checks, then deploys only after both hygiene and verify succeed. Local/native URLs retain their defaults.
 - Phone URL: https://talech.github.io/woodland-wonders/ (available after the first successful deployment).
-- Hosting verification: `pnpm verify`, native export/inspection and 12/12 e2e passed. A separate 360×640 Pages-path check passed tutorial, puzzle navigation, reload, level list and asset loading. Deployment remains pending.
+- Hosting verification: `pnpm verify`, native export/inspection and 12/12 e2e passed. A separate 360×640 Pages-path check passed tutorial, puzzle navigation, reload, level list and asset loading. Deployment of `cb4a73e` succeeded ([CI run](https://github.com/talech/woodland-wonders/actions/runs/46075040240)). First attempt timed out in the existing puzzle-screen render test; one unchanged rerun passed all gates. Live 360×640 browser check passed homepage HTTP 200, tutorial, puzzle navigation, direct reload and level list. Real-device checks remain outstanding.
 
 ## Next actions
 1. **Human:** run playtests per [playtest/PROTOCOL.md](playtest/PROTOCOL.md) (5–8 participants) and record results in `docs/playtest/results/`.

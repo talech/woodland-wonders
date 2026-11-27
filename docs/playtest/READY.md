@@ -22,7 +22,7 @@ Browser fallback on this computer: `pnpm playtest:web`, then open http://127.0.0
 
 ## Before inviting participants
 
-- Record `git rev-parse HEAD`, `git status --short`, device/OS, browser or Expo Go version and run mode. This branch changes docs only; gameplay baseline is `77058e0`.
+- Record `git rev-parse HEAD`, `git status --short`, device/OS, browser or Expo Go version and run mode. Initial hosted build is `cb4a73e`; gameplay rules remain at the existing `77058e0` baseline.
 - Complete one real-phone smoke check: tutorial, placement/removal, empty mark, undo/redo, two-stage hint and Apply, completion, level selection, and save/restore after closing/reopening. Record defects rather than fixing the participant’s board.
 - Check a small portrait screen with normal and OS large text; check reduced motion. Confirm clues, species tray, controls and hint text remain readable and reachable. Automated viewport checks do not certify these device checks.
 - Verify a fresh first-launch state before each participant. Use a fresh private browser session, or a verified clean native profile; reopening Expo Go alone is not a reset. Do not erase personal progress without consent.
