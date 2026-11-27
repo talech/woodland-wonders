@@ -35,11 +35,14 @@ import {
   trayIsCompact,
 } from '../game/layout.ts';
 import { speciesArt } from '../game/presentation.ts';
-import { createSession, type SessionAction, sessionReducer } from '../game/session.ts';
+import { createSession, type SessionAction } from '../game/session.ts';
+import { createScreenState, screenReducer, TUTORIAL_STEPS, TUTORIAL_TEXT } from '../game/tutorial.ts';
 import { useReducedMotion } from '../game/useReducedMotion.ts';
 import { derivePuzzleView } from '../game/view.ts';
+import { CoachCard } from './CoachCard.tsx';
 import { ConfirmBar } from './ConfirmBar.tsx';
 import { ScreenHeader } from './ScreenHeader.tsx';
+import { SpeciesIntro } from './SpeciesIntro.tsx';
 
 const HINT_ACTIONS: Readonly<Record<HintActionId, SessionAction>> = {
   reveal: { type: 'revealHint' },
@@ -62,6 +65,12 @@ export interface PuzzleScreenProps {
   readonly onGameChange?: (game: GameState) => void;
   /** Called once each time the board becomes solved. */
   readonly onSolved?: () => void;
+  /** Run the interactive tutorial on this board. */
+  readonly tutorial?: boolean;
+  /** Tutorial finished (all steps done) or skipped. */
+  readonly onTutorialEnd?: (reason: 'finished' | 'skipped') => void;
+  /** Species to introduce with a one-line card (first time a species appears). */
+  readonly introSpecies?: readonly string[];
 }
 
 /** Keeps the last measured height; ignores sub-pixel jitter to avoid re-layout loops. */
@@ -87,8 +96,27 @@ export function PuzzleScreen({
   initialGame,
   onGameChange,
   onSolved,
+  tutorial = false,
+  onTutorialEnd,
+  introSpecies = [],
 }: PuzzleScreenProps) {
-  const [session, send] = useReducer(sessionReducer, undefined, () => createSession(puzzle, initialGame));
+  const [state, send] = useReducer(screenReducer, undefined, () =>
+    createScreenState(createSession(puzzle, initialGame), tutorial),
+  );
+  const { session, tutorial: tutorialStep } = state;
+  const onTutorialEndRef = useRef(onTutorialEnd);
+  onTutorialEndRef.current = onTutorialEnd;
+  useEffect(() => {
+    if (tutorialStep === 'done') onTutorialEndRef.current?.('finished');
+  }, [tutorialStep]);
+  useEffect(() => {
+    if (tutorialStep) AccessibilityInfo.announceForAccessibility(TUTORIAL_TEXT[tutorialStep].title);
+  }, [tutorialStep]);
+  const onSkipTutorial = useCallback(() => {
+    send({ type: 'closeTutorial' });
+    onTutorialEndRef.current?.('skipped');
+  }, []);
+  const [introDismissed, setIntroDismissed] = useState(false);
   const view = useMemo(() => derivePuzzleView(session), [session]);
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -222,6 +250,24 @@ export function PuzzleScreen({
               onPress: () => setConfirmingReset(true),
             }}
           />
+          {tutorialStep && (
+            <CoachCard
+              step={TUTORIAL_STEPS.indexOf(tutorialStep) + 1}
+              total={TUTORIAL_STEPS.length}
+              title={TUTORIAL_TEXT[tutorialStep].title}
+              body={TUTORIAL_TEXT[tutorialStep].body}
+              {...(tutorialStep === 'done'
+                ? { onDone: () => send({ type: 'closeTutorial' }) }
+                : { onSkip: onSkipTutorial })}
+            />
+          )}
+          {!tutorialStep && !introDismissed && introSpecies.length > 0 && (
+            <SpeciesIntro
+              species={introSpecies}
+              homes={Object.fromEntries(puzzle.ruleset.species.map((s) => [s.id, s.habitats] as const))}
+              onDismiss={() => setIntroDismissed(true)}
+            />
+          )}
           {confirmingReset && (
             <ConfirmBar
               testID="reset-confirm"

@@ -83,3 +83,12 @@ export function groupByTier(levels: readonly Level[] = LEVELS): readonly TierGro
   }
   return [...groups].map(([tier, ls]) => ({ tier, levels: ls }));
 }
+
+/** Species that appear in this level but in no earlier catalog level (first level excluded: the tutorial covers it). */
+export function newSpecies(id: string, levels: readonly Level[] = LEVELS): readonly string[] {
+  const index = levels.findIndex((l) => l.id === id);
+  const level = levels[index];
+  if (!level || index === 0) return [];
+  const seen = new Set(levels.slice(0, index).flatMap((l) => l.puzzle.species));
+  return level.puzzle.species.filter((s) => !seen.has(s));
+}

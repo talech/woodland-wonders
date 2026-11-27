@@ -1,5 +1,6 @@
 /** English UI strings and accessibility labels. Kept in one module so localization can replace it later. */
 import type { CellView, CountStatus } from '@ww/puzzle-core';
+import { habitatArt, speciesInfo } from './presentation.ts';
 
 /** Non-blocking cell issues derived from core violations. */
 export type CellIssue =
@@ -88,6 +89,12 @@ export const STRINGS = {
   resetQuestion: 'Clear every mark on this board? You can undo this.',
   resetConfirm: 'Clear board',
   resetCancel: 'Keep playing',
+  skipTutorial: 'Skip tutorial',
+  startPlaying: 'Start playing',
+  tutorialStep: (step: number, total: number) => `Step ${step} of ${total}`,
+  gotIt: 'Got it',
+  howToPlay: 'How to play',
+  playTutorial: 'Play the tutorial',
   notFoundTitle: 'This clearing is hidden',
   notFoundMessage: "We couldn't find that puzzle. It may have moved.",
 } as const;
@@ -128,4 +135,12 @@ export function levelLabel(
   ];
   if (suggested) parts.push('next up');
   return parts.join(', ');
+}
+
+/** e.g. "New friend: mice live next to a mushroom." */
+export function speciesIntroText(species: string, habitats: readonly string[]): string {
+  const homes = habitats.map((h) => habitatArt(h).name.toLocaleLowerCase('en'));
+  const names = speciesInfo(species).plural.toLocaleLowerCase('en');
+  const where = homes.length === 0 ? 'anywhere' : `next to a ${homes.join(' or ')}`;
+  return `New friend: ${names} live ${where}.`;
 }

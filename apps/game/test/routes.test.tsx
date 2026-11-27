@@ -10,8 +10,18 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 const first = CATALOG.puzzles[0];
 if (!first) throw new Error('empty catalog');
 
+/** Returning player: onboarding already done (onboarding flows are covered in onboarding.test.tsx). */
 beforeEach(async () => {
   await AsyncStorage.clear();
+  await AsyncStorage.setItem(
+    SAVE_KEY,
+    JSON.stringify({
+      schemaVersion: 1,
+      progress: {},
+      active: {},
+      settings: { reducedMotion: 'system', onboardingDone: true },
+    }),
+  );
 });
 
 describe('routes', () => {
