@@ -7,7 +7,7 @@ import {
   SpeciesTray,
   Toolbar,
 } from '@ww/game-ui';
-import { canRedo, canUndo, type Puzzle } from '@ww/puzzle-core';
+import { canRedo, canUndo, type GameState, type Puzzle } from '@ww/puzzle-core';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -55,6 +55,12 @@ export interface PuzzleScreenProps {
   readonly onBack: () => void;
   /** Omit when there is no next puzzle. */
   readonly onNext?: () => void;
+  /** Saved board + history to resume from. */
+  readonly initialGame?: GameState;
+  /** Called after every board change (persistence). */
+  readonly onGameChange?: (game: GameState) => void;
+  /** Called once each time the board becomes solved. */
+  readonly onSolved?: () => void;
 }
 
 /** Keeps the last measured height; ignores sub-pixel jitter to avoid re-layout loops. */
@@ -71,8 +77,17 @@ function useMeasuredHeight(): [number | null, (e: LayoutChangeEvent) => void] {
  * Playable puzzle. Header, tray and board scroll; the toolbar is a fixed bottom bar so core controls are always
  * reachable. Mount with `key={puzzle id}` so switching puzzles starts a fresh session.
  */
-export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: PuzzleScreenProps) {
-  const [session, send] = useReducer(sessionReducer, puzzle, createSession);
+export function PuzzleScreen({
+  puzzle,
+  title,
+  subtitle,
+  onBack,
+  onNext,
+  initialGame,
+  onGameChange,
+  onSolved,
+}: PuzzleScreenProps) {
+  const [session, send] = useReducer(sessionReducer, undefined, () => createSession(puzzle, initialGame));
   const view = useMemo(() => derivePuzzleView(session), [session]);
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -152,9 +167,24 @@ export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: Puzzle
   }, [hintOpen, reducedMotion, scrollToBoard]);
   const hintSteps = useMemo(() => (hint?.steps ?? []).map((text, i) => ({ key: `step-${i}`, text })), [hint]);
 
-  const wasSolved = useRef(false);
+  // Persist every board change (the initial, restored board is not a change).
+  const savedGame = useRef(session.game);
+  const onGameChangeRef = useRef(onGameChange);
+  onGameChangeRef.current = onGameChange;
   useEffect(() => {
-    if (view.solved && !wasSolved.current) AccessibilityInfo.announceForAccessibility(STRINGS.completeTitle);
+    if (session.game === savedGame.current) return;
+    savedGame.current = session.game;
+    onGameChangeRef.current?.(session.game);
+  }, [session.game]);
+
+  const wasSolved = useRef(view.solved);
+  const onSolvedRef = useRef(onSolved);
+  onSolvedRef.current = onSolved;
+  useEffect(() => {
+    if (view.solved && !wasSolved.current) {
+      AccessibilityInfo.announceForAccessibility(STRINGS.completeTitle);
+      onSolvedRef.current?.();
+    }
     wasSolved.current = view.solved;
   }, [view.solved]);
 

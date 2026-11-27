@@ -61,12 +61,15 @@ export type SessionAction =
   | { readonly type: 'cancelRewind' }
   | { readonly type: 'confirmRewind' };
 
-/** Default tool is the first species in canonical ruleset order (or the empty tool for a species-less puzzle). */
-export function createSession(puzzle: Puzzle): Session {
+/**
+ * Default tool is the first species in canonical ruleset order (or the empty tool for a species-less puzzle).
+ * `game` restores a saved (already validated) board and history.
+ */
+export function createSession(puzzle: Puzzle, game: GameState = createGame(puzzle)): Session {
   const first = puzzle.species[0];
   return {
     puzzle,
-    game: createGame(puzzle),
+    game,
     tool: first === undefined ? { kind: 'empty' } : { kind: 'species', species: first },
     hint: null,
   };
