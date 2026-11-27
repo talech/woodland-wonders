@@ -2,6 +2,10 @@
 
 M0–M3 are complete. Test existing rules and the 40-puzzle catalog. No rule or implementation changes are part of this documentation migration. No human results exist yet.
 
+## Hosted playtest (easiest)
+
+Open https://talech.github.io/woodland-wonders/ in Safari or Chrome after the first successful deployment. No Expo Go or laptop is needed. Progress stays in that browser on that device; use a fresh private session per participant. Record the deployed SHA from the successful GitHub Actions run, rather than assuming your local HEAD matches. CI publishes `main` only after all gates pass. Native touch/OS checks remain separate.
+
 ## Get the game onto a phone
 
 From the repository root:

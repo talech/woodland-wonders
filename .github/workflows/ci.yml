@@ -55,3 +55,35 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Web smoke (Playwright, phone viewports; uses web export from verify)
         run: pnpm test:e2e
+
+      - name: Export GitHub Pages build
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          pnpm build:web
+          pnpm check:bundle
+          cp apps/game/dist/web/index.html apps/game/dist/web/404.html
+          touch apps/game/dist/web/.nojekyll
+        env:
+          WW_WEB_BASE_URL: /woodland-wonders
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: apps/game/dist/web
+
+  deploy:
+    name: Publish phone playtest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [hygiene, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

@@ -8,6 +8,8 @@ A cozy, mobile-first logic puzzle. Place woodland animals next to their habitats
 
 > **Status:** M4 ready for human playtesting (M0–M3 complete; CI verified green at `77058e0`). See [docs/STATUS.md](docs/STATUS.md) for current evidence and limitations.
 
+Play on your phone: **https://talech.github.io/woodland-wonders/** (after the first successful Pages deployment). CI publishes `main` only after hygiene, tests, web and native bundle checks pass.
+
 ## Prerequisites
 - Node.js 24 LTS (`.nvmrc`). On macOS with Homebrew: `brew install node@24` and add `/opt/homebrew/opt/node@24/bin` to `PATH`.
 - pnpm via corepack: `corepack enable` (the version is pinned by `packageManager` in `package.json`).

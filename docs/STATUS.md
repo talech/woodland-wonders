@@ -26,7 +26,7 @@ Director-maintained. Reconcile with Git and CI on resume; historical evidence is
 | Integration branch | `main` |
 | Migration base SHA | `77058e0` |
 | Documentation branch | `chore/docs-v2-m4-playtest` (single director, current checkout) |
-| Remote | `github.com/talech/woodland-wonders` (private) |
+| Remote | `github.com/talech/woodland-wonders` (public; owner changed visibility for Pages) |
 | CI | `hygiene` + `verify` (frozen install → verify → native export/inspection → Playwright) |
 
 ## Blockers / limitations
@@ -39,9 +39,15 @@ Director-maintained. Reconcile with Git and CI on resume; historical evidence is
 - Applied v2 concise operating documents and retained detailed engineering reference. M0–M3 remain complete.
 - Preserved GDD, M0 review, all accepted ADRs, implementation, content, tooling and lockfile. GDD kit difference is only a final newline.
 - Latest implementation includes `77058e0`, the decorative SVG accessibility warning fix; historical M3 evidence above remains attributed to its original checks.
-- CI inspected live: hygiene and verify succeeded at `77058e0`. This docs branch is not pushed; landing requires approval.
+- CI inspected live: hygiene and verify succeeded at `77058e0`. Documentation landed locally as `7bef693` with human approval.
 - [M4 readiness checklist](playtest/READY.md) and [blank session sheet](playtest/SESSION-TEMPLATE.md) prepare human testing; no participant outcomes recorded.
 - Local verification: `pnpm verify` passed (191 Vitest + 189 Jest, 40-puzzle content validation, web export and bundle inspection); `pnpm smoke:native` + `pnpm check:bundle:native` passed; Playwright 12/12 passed. Initial sandbox server bind was denied; rerun with approval passed. Hygiene, whitespace and local documentation links passed. Device/simulator and real OS large-text checks remain unverified.
+
+## GitHub Pages hosting
+- Public hosting authorized by the owner; repository visibility confirmed public.
+- CI exports a separate `/woodland-wonders` web build after normal checks, then deploys only after both hygiene and verify succeed. Local/native URLs retain their defaults.
+- Phone URL: https://talech.github.io/woodland-wonders/ (available after the first successful deployment).
+- Hosting verification: `pnpm verify`, native export/inspection and 12/12 e2e passed. A separate 360×640 Pages-path check passed tutorial, puzzle navigation, reload, level list and asset loading. Deployment remains pending.
 
 ## Next actions
 1. **Human:** run playtests per [playtest/PROTOCOL.md](playtest/PROTOCOL.md) (5–8 participants) and record results in `docs/playtest/results/`.
