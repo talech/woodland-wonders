@@ -3,7 +3,17 @@
 _Director-maintained. On resume: re-read this file, then reconcile with `git log`, `git worktree list` and CI._
 
 ## Current milestone
-**M2 — Puzzle intelligence: COMPLETE** (CI green at `0786a17`). Next: **M3 — Vertical slice** (onboarding, progression, local persistence, completion scene, accessibility pass, web build; native smoke).
+**M3 — Vertical slice: functionally complete, final polish in progress (M3-C3.1).** M3-C3 is merged with every gate green.
+
+**M3 gate evidence so far:**
+- **Persistence:** SaveDataV1 with a migration chain, corrupt-save backup and revision handling, tested in jest; restore across a real browser reload is tested in e2e.
+- **Progression:** grouped levels, no locks, Continue / next-up guidance.
+- **Onboarding:** interactive 6-step tutorial advanced by real actions, species intros, How to play.
+- **Completion:** woodland scene that honours reduced motion.
+- **Accessibility:** audit test across all screens (roles, labels, ≥44 pt targets).
+- **Checks:** 191 Vitest + 182 Jest; `check:bundle` web + native; Playwright 12/12.
+- **Open:** M3-C3.1 (the completion scene is mostly off-screen at 360×640; raw content ids show on the level list).
+- **Unverified:** device/simulator runs and real large-text rendering.
 
 **M2 gate evidence:**
 - **Solver:** zero/one/multiple/unknown, matching the oracle on 600 random boards. 10 strategies in tiers 1–3, each with a soundness test.
@@ -42,7 +52,7 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 Integration order for M1: B (no consumers yet) → D (content API additive) → C (consumes content), then Playwright smoke.
 
 ## Active worktrees
-None (all M2 lanes integrated and removed).
+| `../woodland-wonders.worktrees/m3-polish` | `agent/m3/polish` | `9d54019` | lane C: M3-C3.1 |
 
 | Path | Branch | Base | Status |
 |---|---|---|---|
