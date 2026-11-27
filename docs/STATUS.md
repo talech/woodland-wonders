@@ -3,17 +3,16 @@
 _Director-maintained. On resume: re-read this file, then reconcile with `git log`, `git worktree list` and CI._
 
 ## Current milestone
-**M3 — Vertical slice: functionally complete, final polish in progress (M3-C3.1).** M3-C3 is merged with every gate green.
+**M4 — Design validation: ready for human playtests.** M0–M3 are complete (CI green at `b624f75`). The playtest build and protocol are in [playtest/PROTOCOL.md](playtest/PROTOCOL.md). No playtest has been run yet, and no outcomes are claimed.
 
-**M3 gate evidence so far:**
-- **Persistence:** SaveDataV1 with a migration chain, corrupt-save backup and revision handling, tested in jest; restore across a real browser reload is tested in e2e.
-- **Progression:** grouped levels, no locks, Continue / next-up guidance.
-- **Onboarding:** interactive 6-step tutorial advanced by real actions, species intros, How to play.
-- **Completion:** woodland scene that honours reduced motion.
-- **Accessibility:** audit test across all screens (roles, labels, ≥44 pt targets).
-- **Checks:** 191 Vitest + 182 Jest; `check:bundle` web + native; Playwright 12/12.
-- **Open:** M3-C3.1 (the completion scene is mostly off-screen at 360×640; raw content ids show on the level list).
-- **Unverified:** device/simulator runs and real large-text rendering.
+**M3 gate evidence:**
+- **Persistence:** SaveDataV1 with a migration chain, corrupt-save backup, revision handling, a pagehide flush on web and immediate milestone writes. Restore across a real browser reload is tested in e2e.
+- **Progression:** levels grouped by tier, no locks, Continue / next-up guidance, no raw ids shown.
+- **Onboarding:** an interactive 6-step tutorial driven by real actions, species intros, How to play.
+- **Completion:** the scene is now the hero (whole board on a meadow, compact banner) and reduced motion is honoured. Re-verified in screenshots at 360×640 (M3-C3.1).
+- **Accessibility:** an audit test across all screens.
+- **Checks:** 191 Vitest + 189 Jest; `check:bundle` web + native; Playwright 12/12 and **60/60 across 5 repeats** (after fixing a race in the director-owned spec).
+- **Unverified:** device/simulator runs; real OS large-text rendering.
 
 **M2 gate evidence:**
 - **Solver:** zero/one/multiple/unknown, matching the oracle on 600 random boards. 10 strategies in tiers 1–3, each with a soundness test.
@@ -52,7 +51,7 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 Integration order for M1: B (no consumers yet) → D (content API additive) → C (consumes content), then Playwright smoke.
 
 ## Active worktrees
-| `../woodland-wonders.worktrees/m3-polish` | `agent/m3/polish` | `9d54019` | lane C: M3-C3.1 |
+None.
 
 | Path | Branch | Base | Status |
 |---|---|---|---|
@@ -120,5 +119,12 @@ Deferred findings (lane D2): importing a catalog puzzle flags every cell, becaus
 Deferred findings (lane D): no DOM component tests for the editor UI (model is unit-tested); a missing difficulty tier exports as `beginner` but sorts as `tutorial` in `add-puzzle`. Align in M2-D2.
 
 ## Next actions
-1. Plan and dispatch M3 lanes: progression + persistence (SaveDataV1, ADR-0007), onboarding (interactive tutorial over tutorial-01..04), completion scene, accessibility/large-text pass.
-2. Keep the M2 deferred findings on the M4 playtest checklist.
+1. **Human:** run playtests per [playtest/PROTOCOL.md](playtest/PROTOCOL.md) (5–8 participants) and record results in `docs/playtest/results/`.
+2. **Human:** a device check via Expo Go (`pnpm --filter @ww/game start`), including OS large text on a small phone.
+3. **Director, after results:** aggregate into `docs/playtest/SUMMARY.md`; if depth feels shallow, prepare a decision memo on the P6 / local-clues experiments (new ADR + approval before any rule change).
+4. **Deferred engineering backlog:**
+   - species-capacity premise narrowing (review #4);
+   - editor stale metrics after edits (review #5b);
+   - editor import noise;
+   - an Expo re-alignment after 2026-12-10 (ADR-0002);
+   - replacing the template app icon/splash.

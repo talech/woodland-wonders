@@ -21,7 +21,8 @@
     "test:e2e": "playwright test",
     "content:add": "pnpm --filter @ww/puzzle-content run add",
     "check:bundle": "node scripts/check-bundle.ts apps/game/dist/web",
-    "check:bundle:native": "node scripts/check-bundle.ts apps/game/dist/native"
+    "check:bundle:native": "node scripts/check-bundle.ts apps/game/dist/native",
+    "playtest:web": "pnpm build:web && node scripts/serve-static.ts apps/game/dist/web 4173"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
