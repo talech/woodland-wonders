@@ -26,6 +26,10 @@ describe('LevelList', () => {
     expect(CATALOG.puzzles.length).toBe(LEVELS.length);
     for (const [i, def] of CATALOG.puzzles.entries()) {
       const item = screen.getByTestId(`level-${def.id}`);
+      // Raw content ids are never shown or spoken.
+      expect(item.props.accessibilityLabel).not.toContain(def.id);
+      expect(within(item).queryByText(new RegExp(def.id))).toBeNull();
+      expect(within(item).getByText(`${def.rows}×${def.columns}`)).toBeOnTheScreen();
       expect(item).toHaveAccessibleName(
         new RegExp(`^Level ${i + 1}, ${def.difficulty?.tier ?? 'unrated'}, .*${def.rows} by ${def.columns}`),
       );

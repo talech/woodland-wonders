@@ -75,17 +75,21 @@ export function createSaveStore(options: SaveStoreOptions): SaveStore {
     }
   };
 
-  const update = (fn: (data: SaveDataV1) => SaveDataV1) => {
+  /** `milestone`: completion / settings are written on the next tick instead of after the debounce. */
+  const update = (fn: (data: SaveDataV1) => SaveDataV1, milestone = false) => {
     const data = fn(snapshot.data);
     if (data === snapshot.data) return;
     snapshot = { ...snapshot, data };
     dirty = true;
     emit();
     if (timer !== null) clearTimeout(timer);
-    timer = setTimeout(() => {
-      timer = null;
-      void write();
-    }, debounceMs);
+    timer = setTimeout(
+      () => {
+        timer = null;
+        void write();
+      },
+      milestone ? 0 : debounceMs,
+    );
   };
 
   const backup = async (raw: string) => {
@@ -144,16 +148,19 @@ export function createSaveStore(options: SaveStoreOptions): SaveStore {
       });
     },
     markCompleted(id, revision) {
-      update((data) => ({
-        ...data,
-        progress: {
-          ...data.progress,
-          [id]: { completedRevision: revision, completedAt: now().toISOString() },
-        },
-      }));
+      update(
+        (data) => ({
+          ...data,
+          progress: {
+            ...data.progress,
+            [id]: { completedRevision: revision, completedAt: now().toISOString() },
+          },
+        }),
+        true,
+      );
     },
     updateSettings(patch) {
-      update((data) => ({ ...data, settings: { ...data.settings, ...patch } }));
+      update((data) => ({ ...data, settings: { ...data.settings, ...patch } }), true);
     },
     flush: () => write(),
   };

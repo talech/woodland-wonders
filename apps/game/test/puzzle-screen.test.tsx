@@ -60,17 +60,20 @@ describe('PuzzleScreen', () => {
     expect(within(bar).getByRole('button', { name: /^Undo/ })).toBeOnTheScreen();
   });
 
-  it('sizes the board from the measured space above the toolbar', async () => {
+  it('sizes the board from the measured screen minus the fixed toolbar', async () => {
     await renderPuzzle();
     const layout = (height: number) => ({ nativeEvent: { layout: { x: 0, y: 0, width: 360, height } } });
+    // Board region = screen − top inset 47 − toolbar bar (64 tools + 2·8 padding + 1 border + bottom inset 34).
+    const screenFor = (region: number) => region + 47 + 64 + 17 + 34;
     await fireEvent(screen.getByTestId('puzzle-chrome'), 'layout', layout(150));
-    await fireEvent(screen.getByTestId('puzzle-scroll'), 'layout', layout(520));
+    await fireEvent(screen.getByTestId('puzzle-toolbar-tools'), 'layout', layout(64));
+    await fireEvent(screen.getByTestId('puzzle-screen'), 'layout', layout(screenFor(520)));
     // 520 − 150 − 32 padding = 338 → 5 rows × cell + clue(0.7·cell) ≤ 338 → cell 59.
     expect(cell(0)).toHaveStyle({ width: 59, height: 59 });
-    await fireEvent(screen.getByTestId('puzzle-scroll'), 'layout', layout(380));
+    await fireEvent(screen.getByTestId('puzzle-screen'), 'layout', layout(screenFor(380)));
     // 198 → cell 34.
     expect(cell(0)).toHaveStyle({ width: 34, height: 34 });
-    await fireEvent(screen.getByTestId('puzzle-scroll'), 'layout', layout(200));
+    await fireEvent(screen.getByTestId('puzzle-screen'), 'layout', layout(screenFor(200)));
     // Too short: never below 32 pt; the region scrolls instead.
     expect(cell(0)).toHaveStyle({ width: 32, height: 32 });
   });
