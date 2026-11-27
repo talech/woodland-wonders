@@ -1,9 +1,8 @@
-# Project Status
-
-_Director-maintained. On resume: re-read this file, then reconcile with `git log`, `git worktree list` and CI._
+# Project status
+Director-maintained. Reconcile with Git and CI on resume; historical evidence is archived below.
 
 ## Current milestone
-**M4 — Design validation: ready for human playtests.** M0–M3 are complete (CI green at `b624f75`). The playtest build and protocol are in [playtest/PROTOCOL.md](playtest/PROTOCOL.md). No playtest has been run yet, and no outcomes are claimed.
+**M4 — Design validation: ready for human playtests.** M0–M3 are complete (CI green at `77058e0` ([run](https://github.com/talech/woodland-wonders/actions/runs/46020970750))). The playtest build and protocol are in [playtest/PROTOCOL.md](playtest/PROTOCOL.md). No playtest has been run yet, and no outcomes are claimed.
 
 **M3 gate evidence:**
 - **Persistence:** SaveDataV1 with a migration chain, corrupt-save backup, revision handling, a pagehide flush on web and immediate milestone writes. Restore across a real browser reload is tested in e2e.
@@ -25,42 +24,10 @@ _Director-maintained. On resume: re-read this file, then reconcile with `git log
 | Field | Value |
 |---|---|
 | Integration branch | `main` |
-| Lane base SHA | `b78c9ab` |
+| Migration base SHA | `77058e0` |
+| Documentation branch | `chore/docs-v2-m4-playtest` (single director, current checkout) |
 | Remote | `github.com/talech/woodland-wonders` (private) |
-| CI | `hygiene` + `verify` (frozen install → `pnpm verify` → `pnpm smoke:native`) |
-
-## Task registry
-
-| ID | Task | Status | Owner | Write scope | Base | Branch / worktree | Depends on |
-|---|---|---|---|---|---|---|---|
-| M0-1 | Git init, hygiene, CI baseline, remote | done | director | root | — | main | — |
-| M0-2 | Architecture & decision review | **approved** 2026-11-26 | human | docs | — | — | M0-1 |
-| M0-3 | Install Node 24 LTS (Homebrew `node@24`, keg-only) | done | director | machine | — | — | M0-2 |
-| M0b-1 | Workspace scaffold, tooling, CI verify | done (`b78c9ab`) | director | root, apps, package stubs | — | main | M0-2 |
-| M0b-2 | puzzle-core: contracts, ruleset, constraints, actions, history, tests | done (`18af3ff`) | director | packages/puzzle-core | — | main | M0b-1 |
-| M0b-3 | Fixtures, seed catalog, presentation config, boundary check | done (`b78c9ab`) | director | core/testing, puzzle-content, scripts | — | main | M0b-2 |
-| M1-B | Solver: deduction, hints, search, oracle ([packet](tasks/M1-B-solver.md)) | **integrated** `4981ae5` | agent (lane B) | packages/puzzle-solver | `b78c9ab` | `agent/m1/solver` · `../woodland-wonders.worktrees/m1-solver` | core |
-| M1-C | Playable game UI ([packet](tasks/M1-C-player.md)) | **integrated** incl. review fixes M1-C.1 (`b1f3b98`); product findings resolved, screenshot-verified | agent (lane C) | apps/game, packages/game-ui, assets | `b78c9ab` | `agent/m1/player` · `../woodland-wonders.worktrees/m1-player` | core, content |
-| M1-D | Puzzle editor + content add tooling ([packet](tasks/M1-D-editor.md)) | **integrated** `934bf49` | agent (lane D) | apps/puzzle-editor, packages/puzzle-content | `b78c9ab` | `agent/m1/editor` · `../woodland-wonders.worktrees/m1-editor` | core |
-| M1-I | Integrate B/C/D, Playwright web smoke, M1 review gates, real content gates | **done** `09bf98d` | director | root | — | main | M1-B, M1-C, M1-D |
-| M2-B2 | Seeded generator + CLI, depth objectives ([packet](tasks/M2-B2-generator.md)) | **integrated** (`bedca13`) | agent (lane B) | packages/puzzle-generator | f8e9e30 | — | M1-B |
-| M2-D2 | Editor solver panel ([packet](tasks/M2-D2-editor-solver.md)); content:validate gates done by director in M1-I | **integrated** (merge of `66450f7`) | agent (lane D) | apps/puzzle-editor | f8e9e30 | — | M1-B, M1-D |
-| M2-C2 | In-game hints ([packet](tasks/M2-C2-hints.md)) | **integrated** (`2934f8e`) | agent (lane C) | apps/game, game-ui | f8e9e30 | — | M1-B, M1-C |
-| M2-content | 40 curated puzzles | **done** `0845bb3` | director | puzzle-content data, scripts/curate.py | — | main | M2-B2, M2-D2 |
-
-Integration order for M1: B (no consumers yet) → D (content API additive) → C (consumes content), then Playwright smoke.
-
-## Active worktrees
-None.
-
-| Path | Branch | Base | Status |
-|---|---|---|---|
-
-## Decisions
-- Accepted: [ADR-0001](adr/0001-repository-workflow.md) … [ADR-0009](adr/0009-content-policy.md).
-- Expo held at 58.0.25 / expo-router 58.0.31 under the release-age policy. Re-align after 2026-12-10 (ADR-0002 notes).
-- `docs/gdd.md` renamed to `docs/GDD.md` (case only).
-- Biome excludes Markdown so human-authored docs are never reformatted.
+| CI | `hygiene` + `verify` (frozen install → verify → native export/inspection → Playwright) |
 
 ## Blockers / limitations
 1. **Branch protection** unavailable on the current GitHub plan (T9 accepted). Enforced by CI + director policy.
@@ -68,55 +35,13 @@ None.
 3. Node is keg-only: add `/opt/homebrew/opt/node@24/bin` to your shell `PATH` to run commands yourself.
 4. Depth is scarce: about 90% of valid generated puzzles need only tier 1. The catalog is depth-selected (8 tier-2 intermediates, 8 tier-3 advanced), but difficulty is provisional until playtested (M4).
 
-## Verification evidence
-| Date | SHA | Check | Result |
-|---|---|---|---|
-| 2026-11-26 | `0b7a8df` | CI hygiene | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45892820637)) |
-| 2026-11-26 | — | Branch protection API | HTTP 403 (plan limitation) |
-| 2026-11-26 | — | Worktree isolation dry-run | pass |
-| 2026-11-26 | `b78c9ab` | local `pnpm verify` (lint, format, typecheck ×7, boundaries, 68 Vitest + 1 Jest, content 4/4, web export) | pass |
-| 2026-11-26 | `b78c9ab` | local `pnpm smoke:native`, editor `vite build`, frozen install | pass |
-| 2026-11-26 | `b78c9ab` | `check:boundaries` negative test (5 planted violations detected) | pass |
-| 2026-11-26 | `b78c9ab` | CI hygiene + verify (fresh Linux clone) | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45895320650)) |
-
-| 2026-11-26 | `09bf98d` | After lane B: `pnpm verify` (161 Vitest + 52 Jest), `content:validate` 4/4 unique + deduced + replayed, negative probe (multi-solution) fails as expected, smoke:native, Playwright 6/6, CI | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45898272537)) |
-| 2026-11-26 | `934bf49` | After merging lane D: `pnpm verify` (93 Vitest + 1 Jest), editor build, Playwright 2/2 | pass |
-
-| 2026-11-26 | merge of lane C | `pnpm verify` (93 Vitest + 41 Jest), `smoke:native`, Playwright 6/6 (boot, full play-through of meadow-001 with violation + undo, 6×6 fit) at 360×640 and 390×844 | pass |
-
-**M1 product review (director, Playwright screenshots at 360×640): RESOLVED in M1-C.1, re-verified by screenshot + e2e `toBeInViewport` regression.**
-1. The species tray breaks words mid-word with 3 species ("Mous/e"), and the hint text makes the cards tall.
-2. The toolbar (Mark empty / Undo / Redo) sits below the fold with the 6×6 board.
-
-Non-blocking: the app icon/splash are Expo template defaults; the completion is a panel plus hop rather than the GDD scene transition (M3); glyph ◒ may be missing on some Android fonts (SVG art still distinguishes).
-
-| 2026-11-26 | merge of D2 | `pnpm verify` (169 Vitest + 52 Jest), editor build, browser check of solver panel on meadow-004 (publishable, 1 solution, 40-step trace, step highlighting) | pass |
-
-| 2026-11-26 | `0786a17` | Catalog v1 (40) + hints merged: verify (191 Vitest + 130 Jest), content 40/40, smoke:native, Playwright 10/10, CI | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45900411266)) |
-
-**Independent M1–M2 review (read-only agent, 2026-11-26): no blocking findings.**
-- Verified sound:
-  - search vs an independent brute force on 3,085 boards, 0 mismatches;
-  - 0 unsound eliminations, also with 2,334 random player-mark boards;
-  - every wrong player mark across 40 puzzles yields a contradiction, never a move;
-  - all 40 catalog puzzles independently unique;
-  - generator band claims hold;
-  - at 10×10: search ≤ 11 ms, hint ≤ 1.4 ms.
-- Resolved by the director:
-  - **#1 (major)** `check:boundaries` bypasses: the runtime-closure check now covers transitive packages; absolute paths and non-literal `import()` are rejected; the dev exemption is anchored at the package root; relative access to `src/search`/`src/testing` is blocked. The fixes were replayed against all reviewed bypasses. New `check:bundle` inspects source maps of the real web and native bundles (no search, generator, testing or content-script sources shipped).
-  - **#5** `content:validate` now checks stored `requiredTier` claims.
-  - **#7** The stray `pnpm-lock 2.yaml` (stale untracked snapshot) was moved to scratch; hygiene now rejects `name 2.ext` duplicates. A pre-existing bug was also found and fixed: the 2 MB large-file guard had silently never run (xargs error swallowed).
-- Delegated to M3 lane C3: **#2** hint text says "already has them" for deduced-but-unplaced animals; **#3** habitat copy should say "beside (not diagonally)".
-- Deferred:
-  - **#4** `species-capacity` premises cover the whole board, so hints highlight everything and the chain metric is inflated (sound, UX only; M4).
-  - **#5b** The editor keeps stale imported metrics/provenance after edits (`content:validate` now catches tier mismatches).
-- Accepted risk: **#6** shipped provenance seeds let someone with the generator reproduce solutions. The generator doesn't ship, and the in-game hint system can already derive every answer on device, so this adds no material exposure.
-
-Deferred product findings (M2): on a fresh board the first hint is usually a trivial `no-habitat` step (sound, but possibly low-value for experienced players; evaluate in M4). The hint panel shows about 3 lines at 360×640 and scrolls inside for long chains. The tutorial species and generator ids are covered by curation renaming (`<band>-NN`).
-
-Deferred findings (lane D2): importing a catalog puzzle flags every cell, because the painted-solution check runs against an empty painting (definitions carry no solution); the solver panel has no DOM tests; search runs on the main thread. Difficulty insight: 26/40 steps of meadow-004 are trivial `no-habitat` eliminations, so the generator must measure substantive steps (sent to B2).
-
-Deferred findings (lane D): no DOM component tests for the editor UI (model is unit-tested); a missing difficulty tier exports as `beginner` but sorts as `tutorial` in `add-puzzle`. Align in M2-D2.
+## Documentation migration — 2026-11-27
+- Applied v2 concise operating documents and retained detailed engineering reference. M0–M3 remain complete.
+- Preserved GDD, M0 review, all accepted ADRs, implementation, content, tooling and lockfile. GDD kit difference is only a final newline.
+- Latest implementation includes `77058e0`, the decorative SVG accessibility warning fix; historical M3 evidence above remains attributed to its original checks.
+- CI inspected live: hygiene and verify succeeded at `77058e0`. This docs branch is not pushed; landing requires approval.
+- [M4 readiness checklist](playtest/READY.md) and [blank session sheet](playtest/SESSION-TEMPLATE.md) prepare human testing; no participant outcomes recorded.
+- Local verification: `pnpm verify` passed (191 Vitest + 189 Jest, 40-puzzle content validation, web export and bundle inspection); `pnpm smoke:native` + `pnpm check:bundle:native` passed; Playwright 12/12 passed. Initial sandbox server bind was denied; rerun with approval passed. Hygiene, whitespace and local documentation links passed. Device/simulator and real OS large-text checks remain unverified.
 
 ## Next actions
 1. **Human:** run playtests per [playtest/PROTOCOL.md](playtest/PROTOCOL.md) (5–8 participants) and record results in `docs/playtest/results/`.
@@ -128,3 +53,5 @@ Deferred findings (lane D): no DOM component tests for the editor UI (model is u
    - editor import noise;
    - an Expo re-alignment after 2026-12-10 (ADR-0002);
    - replacing the template app icon/splash.
+
+Historical task registry, decisions, review findings and verification evidence: [STATUS-2026-11-26.md](history/STATUS-2026-11-26.md). Git inspection on 2026-11-27 found only the primary checkout; no worker worktrees. Untracked `docs/design/` and the source migration kit are preserved and excluded from this change.

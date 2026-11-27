@@ -4,9 +4,9 @@ Purpose: test whether the foundational rules make a compelling puzzle (GDD §14)
 
 ## 1. Build under test
 - Version: `main` at the commit you test (record the SHA). Catalog v1, 40 puzzles ([../content/CURATION.md](../content/CURATION.md)).
-- **Browser (desktop or phone on the same Wi-Fi):** run `pnpm playtest:web`, then open http://127.0.0.1:4173 on this machine. For a phone on the LAN, see the note in §6.
+- **Browser (this computer):** run `pnpm playtest:web`, then open http://127.0.0.1:4173 on this machine. For a phone, use Expo Go as below or see the fallback in [READY.md](READY.md).
 - **Phone via Expo Go (recommended for touch feel):** run `pnpm --filter @ww/game start`, then scan the QR code with Expo Go (iOS/Android, same network).
-- **Fresh state per participant:** the web build stores progress in browser localStorage, so use a private window or clear site data. On Expo Go, delete and reopen the project or use a fresh device profile.
+- **Fresh state per participant:** the web build stores progress in browser localStorage, so use a private window or clear site data. On Expo Go, verify that the first-launch tutorial appears; reopening alone may retain saves. Use a fresh device profile or explicitly clear project app data, with the device owner’s consent.
 
 ## 2. Participants
 Aim for 5–8 people, 30–40 minutes each, run individually. Mix:
@@ -54,7 +54,7 @@ Also ask:
 - Anything you wanted to do but couldn't?
 
 ## 6. Known questions this playtest must answer (from build review)
-1. **Depth:** about 90% of generated puzzles need only tier-1 reasoning. Do intermediate and advanced feel meaningfully harder, or "more of the same"? If the latter, evaluate the approved M4 experiments: **P6** (every habitat must host ≥1 animal) and **local clues** (GDD §5). Neither is implemented.
+1. **Depth:** about 90% of generated puzzles need only tier-1 reasoning. Do intermediate and advanced feel meaningfully harder, or "more of the same"? If the latter, prepare options for the proposed M4 experiments: **P6** (every habitat must host ≥1 animal) and **local clues** (GDD §5). Neither is approved for implementation; a new ADR and human approval are required.
 2. **First hint is often trivial** (a "no habitat nearby" step). Is it useful for beginners and patronising for others?
 3. **Long hints from the 2×2-packing strategy** (`species-capacity`) highlight the whole board in advanced puzzles (review finding #4). Do players follow them?
 4. **Difficulty calibration:** is the tier ordering, by required strategy tier then substantive steps, consistent with what players perceive?
