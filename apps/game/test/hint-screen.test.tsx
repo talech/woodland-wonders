@@ -113,11 +113,13 @@ describe('hints on the puzzle screen', () => {
     await renderPuzzle();
     await fireEvent.press(cell(10)); // fox at (2,2): clues fine, but no tree next to it
     await press('action-hint');
-    expect(within(panel()).getByText('The fox at row 3, column 3 has no tree next to it.')).toBeOnTheScreen();
+    expect(
+      within(panel()).getByText('The fox at row 3, column 3 has no tree directly beside it.'),
+    ).toBeOnTheScreen();
     expect(within(panel()).getByText(/! badge/)).toBeOnTheScreen();
     await press('hint-action-rewind');
     await press('hint-action-cancel-rewind');
-    expect(cell(10)).toHaveAccessibleName('Row 3, column 3: fox, needs a tree next to it');
+    expect(cell(10)).toHaveAccessibleName('Row 3, column 3: fox, needs a tree directly beside it');
   });
 
   it('following hints from blank solves the puzzle', async () => {

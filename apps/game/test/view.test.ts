@@ -39,7 +39,9 @@ describe('derivePuzzleView', () => {
     );
     expect(view.cells[8]?.flagged).toBe(true);
     expect(view.cells[12]?.accessibilityLabel).toBe('Row 3, column 3: mouse, touching another mouse');
-    expect(view.cells[0]?.accessibilityLabel).toBe('Row 1, column 1: mouse, needs a mushroom next to it');
+    expect(view.cells[0]?.accessibilityLabel).toBe(
+      'Row 1, column 1: mouse, needs a mushroom directly beside it',
+    );
     expect(view.cells[1]?.flagged).toBe(false);
   });
 
@@ -53,7 +55,9 @@ describe('derivePuzzleView', () => {
     const fox = view.tools.find((t) => t.id === 'fox');
     expect(fox?.count.placed).toBe(2);
     expect(fox?.statusText).toBe('too many');
-    expect(fox?.accessibilityLabel).toBe('Fox, 2 of 1 placed, too many. Lives next to a tree');
+    expect(fox?.accessibilityLabel).toBe(
+      'Fox, 2 of 1 placed, too many. Lives beside a tree (not diagonally)',
+    );
   });
 
   it('is solved only when core says so', () => {

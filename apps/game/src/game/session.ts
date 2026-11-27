@@ -53,6 +53,8 @@ export type SessionAction =
   | { readonly type: 'tapCell'; readonly cell: CellIndex }
   | { readonly type: 'undo' }
   | { readonly type: 'redo' }
+  /** Clear every mark (core `clearAll`): a single undoable move. */
+  | { readonly type: 'reset' }
   | { readonly type: 'requestHint' }
   | { readonly type: 'revealHint' }
   | { readonly type: 'applyHint' }
@@ -61,12 +63,15 @@ export type SessionAction =
   | { readonly type: 'cancelRewind' }
   | { readonly type: 'confirmRewind' };
 
-/** Default tool is the first species in canonical ruleset order (or the empty tool for a species-less puzzle). */
-export function createSession(puzzle: Puzzle): Session {
+/**
+ * Default tool is the first species in canonical ruleset order (or the empty tool for a species-less puzzle).
+ * `game` restores a saved (already validated) board and history.
+ */
+export function createSession(puzzle: Puzzle, game: GameState = createGame(puzzle)): Session {
   const first = puzzle.species[0];
   return {
     puzzle,
-    game: createGame(puzzle),
+    game,
     tool: first === undefined ? { kind: 'empty' } : { kind: 'species', species: first },
     hint: null,
   };
@@ -144,6 +149,10 @@ export function sessionReducer(state: Session, action: SessionAction): Session {
     case 'redo': {
       const game = redo(state.game);
       return game ? withGame(state, game) : state;
+    }
+    case 'reset': {
+      const result = dispatch(state.puzzle, state.game, { type: 'clearAll' });
+      return result.ok ? withGame(state, result.game) : state;
     }
     case 'requestHint':
       return { ...state, hint: hintFor(state.puzzle, state.game) };

@@ -5,7 +5,7 @@ import { AccessibilityInfo } from 'react-native';
  * Tracks the OS "reduce motion" setting. Starts as `true` (still) until the platform answers, so users who asked
  * for reduced motion never see a flash of animation.
  */
-export function useReducedMotion(): boolean {
+export function useReducedMotion(setting: 'system' | 'on' | 'off' = 'system'): boolean {
   const [reduced, setReduced] = useState(true);
   useEffect(() => {
     let alive = true;
@@ -23,5 +23,5 @@ export function useReducedMotion(): boolean {
       sub.remove();
     };
   }, []);
-  return reduced;
+  return setting === 'on' ? true : setting === 'off' ? false : reduced;
 }

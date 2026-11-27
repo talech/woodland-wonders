@@ -39,7 +39,7 @@ describe('PuzzleScreen', () => {
     expect(screen.getByRole('button', { name: 'Back to levels' })).toBeOnTheScreen();
     expect(screen.getByTestId('tool-fox')).toBeSelected();
     expect(screen.getByTestId('tool-mouse')).not.toBeSelected();
-    expect(screen.getByText('Lives next to a mushroom')).toBeOnTheScreen();
+    expect(screen.getByText('Lives beside a mushroom (not diagonally)')).toBeOnTheScreen();
     expect(screen.getAllByTestId(/^cell-\d+$/)).toHaveLength(25);
     expect(screen.getByTestId('action-undo')).toBeDisabled();
     expect(screen.getByTestId('action-redo')).toBeDisabled();
@@ -200,5 +200,25 @@ describe('PuzzleScreen', () => {
     expect(screen.getByTestId('scene-complete')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Next puzzle' })).toBeNull();
     expect(screen.getByTestId('complete-back')).toBeOnTheScreen();
+  });
+
+  it('reset asks first, clears the board as one undoable move', async () => {
+    await renderPuzzle();
+    await tap(19);
+    await selectTool('mouse');
+    await tap(8);
+    await fireEvent.press(screen.getByRole('button', { name: 'Reset puzzle' }));
+    expect(screen.getByTestId('reset-confirm')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep playing' }));
+    expect(screen.queryByTestId('reset-confirm')).toBeNull();
+    expect(cell(19)).toHaveAccessibleName(/: fox$/);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Reset puzzle' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Clear board' }));
+    expect(cell(19)).toHaveAccessibleName(/: unmarked$/);
+    expect(cell(8)).toHaveAccessibleName(/: unmarked$/);
+    await fireEvent.press(screen.getByTestId('action-undo'));
+    expect(cell(19)).toHaveAccessibleName(/: fox$/);
+    expect(cell(8)).toHaveAccessibleName(/: mouse$/);
   });
 });

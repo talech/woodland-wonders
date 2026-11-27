@@ -7,7 +7,7 @@ import {
   SpeciesTray,
   Toolbar,
 } from '@ww/game-ui';
-import { canRedo, canUndo, type Puzzle } from '@ww/puzzle-core';
+import { canRedo, canUndo, type GameState, type Puzzle } from '@ww/puzzle-core';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -34,11 +34,14 @@ import {
   trayCardBasis,
   trayIsCompact,
 } from '../game/layout.ts';
-import { speciesArt } from '../game/presentation.ts';
-import { createSession, type SessionAction, sessionReducer } from '../game/session.ts';
+import { createSession, type SessionAction } from '../game/session.ts';
+import { createScreenState, screenReducer, TUTORIAL_STEPS, TUTORIAL_TEXT } from '../game/tutorial.ts';
 import { useReducedMotion } from '../game/useReducedMotion.ts';
 import { derivePuzzleView } from '../game/view.ts';
+import { CoachCard } from './CoachCard.tsx';
+import { ConfirmBar } from './ConfirmBar.tsx';
 import { ScreenHeader } from './ScreenHeader.tsx';
+import { SpeciesIntro } from './SpeciesIntro.tsx';
 
 const HINT_ACTIONS: Readonly<Record<HintActionId, SessionAction>> = {
   reveal: { type: 'revealHint' },
@@ -55,6 +58,20 @@ export interface PuzzleScreenProps {
   readonly onBack: () => void;
   /** Omit when there is no next puzzle. */
   readonly onNext?: () => void;
+  /** Saved board + history to resume from. */
+  readonly initialGame?: GameState;
+  /** Called after every board change (persistence). */
+  readonly onGameChange?: (game: GameState) => void;
+  /** Called once each time the board becomes solved. */
+  readonly onSolved?: () => void;
+  /** Run the interactive tutorial on this board. */
+  readonly tutorial?: boolean;
+  /** Tutorial finished (all steps done) or skipped. */
+  readonly onTutorialEnd?: (reason: 'finished' | 'skipped') => void;
+  /** Species to introduce with a one-line card (first time a species appears). */
+  readonly introSpecies?: readonly string[];
+  /** Saved reduced-motion preference ('system' follows the OS setting). */
+  readonly reducedMotionSetting?: 'system' | 'on' | 'off';
 }
 
 /** Keeps the last measured height; ignores sub-pixel jitter to avoid re-layout loops. */
@@ -71,12 +88,41 @@ function useMeasuredHeight(): [number | null, (e: LayoutChangeEvent) => void] {
  * Playable puzzle. Header, tray and board scroll; the toolbar is a fixed bottom bar so core controls are always
  * reachable. Mount with `key={puzzle id}` so switching puzzles starts a fresh session.
  */
-export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: PuzzleScreenProps) {
-  const [session, send] = useReducer(sessionReducer, puzzle, createSession);
+export function PuzzleScreen({
+  puzzle,
+  title,
+  subtitle,
+  onBack,
+  onNext,
+  initialGame,
+  onGameChange,
+  onSolved,
+  tutorial = false,
+  onTutorialEnd,
+  introSpecies = [],
+  reducedMotionSetting = 'system',
+}: PuzzleScreenProps) {
+  const [state, send] = useReducer(screenReducer, undefined, () =>
+    createScreenState(createSession(puzzle, initialGame), tutorial),
+  );
+  const { session, tutorial: tutorialStep } = state;
+  const onTutorialEndRef = useRef(onTutorialEnd);
+  onTutorialEndRef.current = onTutorialEnd;
+  useEffect(() => {
+    if (tutorialStep === 'done') onTutorialEndRef.current?.('finished');
+  }, [tutorialStep]);
+  useEffect(() => {
+    if (tutorialStep) AccessibilityInfo.announceForAccessibility(TUTORIAL_TEXT[tutorialStep].title);
+  }, [tutorialStep]);
+  const onSkipTutorial = useCallback(() => {
+    send({ type: 'closeTutorial' });
+    onTutorialEndRef.current?.('skipped');
+  }, []);
+  const [introDismissed, setIntroDismissed] = useState(false);
   const view = useMemo(() => derivePuzzleView(session), [session]);
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useReducedMotion(reducedMotionSetting);
   const [chromeHeight, onChromeLayout] = useMeasuredHeight();
   // The scroll viewport is measured only while the hint panel is closed; the open layout derives from it.
   const hintOpen = session.hint !== null;
@@ -126,6 +172,13 @@ export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: Puzzle
   const onRedo = useCallback(() => send({ type: 'redo' }), []);
   const onHint = useCallback(() => send({ type: hintOpen ? 'dismissHint' : 'requestHint' }), [hintOpen]);
   const onDismissHint = useCallback(() => send({ type: 'dismissHint' }), []);
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  // "Play again" clears the board as one undoable move (no extra confirmation needed).
+  const onReplay = useCallback(() => send({ type: 'reset' }), []);
+  const onConfirmReset = useCallback(() => {
+    send({ type: 'reset' });
+    setConfirmingReset(false);
+  }, []);
 
   const hint = view.hint;
   const announcement = hint?.announcement ?? null;
@@ -152,13 +205,27 @@ export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: Puzzle
   }, [hintOpen, reducedMotion, scrollToBoard]);
   const hintSteps = useMemo(() => (hint?.steps ?? []).map((text, i) => ({ key: `step-${i}`, text })), [hint]);
 
-  const wasSolved = useRef(false);
+  // Persist every board change (the initial, restored board is not a change).
+  const savedGame = useRef(session.game);
+  const onGameChangeRef = useRef(onGameChange);
+  onGameChangeRef.current = onGameChange;
   useEffect(() => {
-    if (view.solved && !wasSolved.current) AccessibilityInfo.announceForAccessibility(STRINGS.completeTitle);
+    if (session.game === savedGame.current) return;
+    savedGame.current = session.game;
+    onGameChangeRef.current?.(session.game);
+  }, [session.game]);
+
+  const wasSolved = useRef(view.solved);
+  const onSolvedRef = useRef(onSolved);
+  onSolvedRef.current = onSolved;
+  useEffect(() => {
+    if (view.solved && !wasSolved.current) {
+      AccessibilityInfo.announceForAccessibility(STRINGS.completeTitle);
+      onSolvedRef.current?.();
+    }
     wasSolved.current = view.solved;
   }, [view.solved]);
 
-  const animals = useMemo(() => puzzle.species.map(speciesArt), [puzzle]);
   const { tool, game } = session;
 
   return (
@@ -176,7 +243,44 @@ export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: Puzzle
         testID="puzzle-scroll"
       >
         <View style={styles.chrome} onLayout={onChromeLayout} testID="puzzle-chrome">
-          <ScreenHeader title={title} {...(subtitle != null ? { subtitle } : {})} onBack={onBack} />
+          <ScreenHeader
+            title={title}
+            {...(subtitle != null ? { subtitle } : {})}
+            onBack={onBack}
+            action={{
+              label: STRINGS.reset,
+              accessibilityLabel: STRINGS.resetLabel,
+              onPress: () => setConfirmingReset(true),
+            }}
+          />
+          {tutorialStep && (
+            <CoachCard
+              step={TUTORIAL_STEPS.indexOf(tutorialStep) + 1}
+              total={TUTORIAL_STEPS.length}
+              title={TUTORIAL_TEXT[tutorialStep].title}
+              body={TUTORIAL_TEXT[tutorialStep].body}
+              {...(tutorialStep === 'done'
+                ? { onDone: () => send({ type: 'closeTutorial' }) }
+                : { onSkip: onSkipTutorial })}
+            />
+          )}
+          {!tutorialStep && !introDismissed && introSpecies.length > 0 && (
+            <SpeciesIntro
+              species={introSpecies}
+              homes={Object.fromEntries(puzzle.ruleset.species.map((s) => [s.id, s.habitats] as const))}
+              onDismiss={() => setIntroDismissed(true)}
+            />
+          )}
+          {confirmingReset && (
+            <ConfirmBar
+              testID="reset-confirm"
+              question={STRINGS.resetQuestion}
+              confirmLabel={STRINGS.resetConfirm}
+              cancelLabel={STRINGS.resetCancel}
+              onConfirm={onConfirmReset}
+              onCancel={() => setConfirmingReset(false)}
+            />
+          )}
           <SpeciesTray
             tools={view.tools}
             selectedId={tool.kind === 'species' ? tool.species : null}
@@ -187,13 +291,15 @@ export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: Puzzle
         </View>
         {view.solved && (
           <SceneComplete
-            animals={animals}
+            animals={[]}
             reducedMotion={reducedMotion}
             title={STRINGS.completeTitle}
             message={STRINGS.completeMessage}
             nextLabel={STRINGS.next}
             backLabel={STRINGS.backToList}
             onBack={onBack}
+            replayLabel={STRINGS.playAgain}
+            onReplay={onReplay}
             {...(onNext ? { onNext } : {})}
           />
         )}
@@ -207,6 +313,8 @@ export function PuzzleScreen({ puzzle, title, subtitle, onBack, onNext }: Puzzle
             cellSize={layout.cellSize}
             clueSize={layout.clueSize}
             onCellPress={onCellPress}
+            scene={view.solved}
+            reducedMotion={reducedMotion}
           />
         </View>
       </ScrollView>

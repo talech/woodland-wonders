@@ -3,7 +3,14 @@
  * for its `solver.<strategy>` key + params; `test/hint-text.test.ts` fails if a strategy ships without one.
  * Rows/columns are 1-based; species and habitat names come from presentation config.
  */
-import type { CellIndex, ConstraintId, Puzzle, Violation } from '@ww/puzzle-core';
+import {
+  type CellIndex,
+  type CellMark,
+  type ConstraintId,
+  isAnimal,
+  type Puzzle,
+  type Violation,
+} from '@ww/puzzle-core';
 import type { Conclusion, DeductionStep, StrategyId } from '@ww/puzzle-solver';
 import { habitatArt, speciesInfo } from './presentation.ts';
 import type { HintState } from './session.ts';
@@ -69,17 +76,36 @@ function groupSpecies(params: Params): string[] {
 
 export interface ExplainContext {
   readonly puzzle: Puzzle;
+  /** The player's current marks; lets a template say "already placed" only when that is literally true. */
+  readonly marks?: readonly CellMark[];
+}
+
+/**
+ * True when every cell a step relies on is actually marked as required on the board. Steps may instead rely on
+ * cells deduced by earlier steps in the chain, which the player has not placed yet.
+ */
+function premisesPlaced(
+  step: DeductionStep,
+  ctx: ExplainContext,
+  holds: (mark: CellMark) => boolean,
+): boolean {
+  const { marks } = ctx;
+  if (!marks) return false;
+  return step.premises.cells.every((c) => {
+    const m = marks[c];
+    return m !== undefined && holds(m);
+  });
 }
 
 type Explainer = (step: DeductionStep, ctx: ExplainContext) => string;
 
 /** Plain-words strategy names shown at hint stage 1. */
 export const STRATEGY_NAMES: Readonly<Record<StrategyId, string>> = {
-  'no-habitat': 'Every animal needs its home right next door',
+  'no-habitat': 'Every animal needs its home directly beside it',
   'neighbour-exclusion': 'Animals of the same kind never touch',
-  'line-saturated': 'This line already has all its animals',
+  'line-saturated': 'This line’s animals are all accounted for',
   'line-forced': 'This line needs every spot it has left',
-  'species-exhausted': 'All of these animals are already placed',
+  'species-exhausted': 'All of these animals are accounted for',
   'species-forced': 'These animals have just enough room',
   'species-group': 'Count two kinds of animal together',
   'line-pointing': 'Where this line’s animals have to go',
@@ -97,27 +123,34 @@ export const EXPLAINERS: Readonly<Record<StrategyId, Explainer>> = {
       species.map((s) => `a ${singular(s)}`),
       'or',
     );
-    return `${cap(cellText(puzzle, cell))} isn’t next to a ${joinList(habitats, 'or')}, so ${who} can’t live there.`;
+    return `${cap(cellText(puzzle, cell))} has no ${joinList(habitats, 'or')} directly beside it (up, down, left or right), so ${who} can’t live there.`;
   },
   'neighbour-exclusion': (step, { puzzle }) => {
     const p = step.explanation.params;
     const s = str(p, 'species');
     return `There’s a ${singular(s)} at ${cellText(puzzle, num(p, 'cell'))}. ${cap(plural(s))} never touch, not even corner to corner, so the cells around it can’t hold another ${singular(s)}.`;
   },
-  'line-saturated': (step) => {
+  'line-saturated': (step, ctx) => {
     const p = step.explanation.params;
-    return `${cap(lineText(p))} needs ${animals(num(p, 'target'))} and already has them, so every other cell in ${lineText(p)} is empty.`;
+    const t = num(p, 'target');
+    const known = premisesPlaced(step, ctx, isAnimal)
+      ? 'already has them'
+      : `the steps above show where ${t === 1 ? 'it goes' : `all ${t} go`}`;
+    return `${cap(lineText(p))} needs ${animals(t)} and ${known}, so every other cell in ${lineText(p)} is empty.`;
   },
   'line-forced': (step) => {
     const p = step.explanation.params;
     const t = num(p, 'target');
     return `${cap(lineText(p))} needs ${animals(t)}, and only ${t} ${t === 1 ? 'cell' : 'cells'} there could still hold one, so ${t === 1 ? 'that cell holds' : 'each of them holds'} an animal.`;
   },
-  'species-exhausted': (step) => {
+  'species-exhausted': (step, ctx) => {
     const p = step.explanation.params;
     const s = str(p, 'species');
     const t = num(p, 'target');
-    return `The puzzle has ${countOf(s, t)}, and ${t === 1 ? 'it is' : 'they are all'} already placed, so no other cell can hold a ${singular(s)}.`;
+    const known = premisesPlaced(step, ctx, (m) => m === s)
+      ? `${t === 1 ? 'it is' : 'they are all'} already placed`
+      : `the steps above show where ${t === 1 ? 'it goes' : `all ${t} go`}`;
+    return `The puzzle has ${countOf(s, t)}, and ${known}, so no other cell can hold a ${singular(s)}.`;
   },
   'species-forced': (step) => {
     const p = step.explanation.params;
@@ -206,7 +239,7 @@ export function violationText(v: Violation, puzzle: Puzzle): string {
       const homes = str(v.data, 'habitats').split(',').filter(Boolean).map(habitatName);
       const cell = v.cells[0];
       const at = cell === undefined ? '' : ` at ${cellText(puzzle, cell)}`;
-      return `The ${singular(s)}${at} has no ${joinList(homes, 'or')} next to it.`;
+      return `The ${singular(s)}${at} has no ${joinList(homes, 'or')} directly beside it.`;
     }
     case 'count-over':
       if (line) return `${cap(line)} has more animals than its clue.`;
@@ -254,8 +287,8 @@ function moves(n: number): string {
   return n === 1 ? '1 move' : `${n} moves`;
 }
 
-export function describeHint(hint: HintState, puzzle: Puzzle): HintDescription {
-  const ctx: ExplainContext = { puzzle };
+export function describeHint(hint: HintState, puzzle: Puzzle, marks?: readonly CellMark[]): HintDescription {
+  const ctx: ExplainContext = marks ? { puzzle, marks } : { puzzle };
   const none = { steps: [], conclusion: null, actions: [], region: new Set<CellIndex>(), focus: null };
   switch (hint.kind) {
     case 'solved':
