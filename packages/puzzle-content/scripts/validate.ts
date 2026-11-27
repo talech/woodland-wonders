@@ -71,9 +71,30 @@ for (const def of puzzles) {
     continue;
   }
 
+  // Stored difficulty claims must match reality (review finding #5): recompute the minimum required tier.
+  let requiredTier = 0;
+  for (const tier of [1, 2, 3, 4] as const) {
+    if (deduce(puzzle, createBoard(puzzle).marks, { maxTier: tier }).kind === 'solved') {
+      requiredTier = tier;
+      break;
+    }
+  }
+  const claimed = def.difficulty?.metrics?.requiredTier;
+  if (claimed !== undefined && claimed !== requiredTier) {
+    fail(
+      def.id,
+      `difficulty.metrics.requiredTier claims ${claimed} but puzzle requires tier ${requiredTier}`,
+    );
+    continue;
+  }
+  if (!def.difficulty) {
+    fail(def.id, 'missing difficulty.tier');
+    continue;
+  }
+
   const m = analyzeDifficulty(result.steps);
   console.log(
-    `ok    ${def.id.padEnd(12)} ${`${def.rows}x${def.columns}`.padEnd(5)} unique (${found.nodes} nodes) · deduced in ${m.stepCount} steps · max tier ${m.maxTier}`,
+    `ok    ${def.id.padEnd(12)} ${`${def.rows}x${def.columns}`.padEnd(5)} unique (${found.nodes} nodes) · deduced in ${m.stepCount} steps · requires tier ${requiredTier} (${def.difficulty.tier})`,
   );
 }
 

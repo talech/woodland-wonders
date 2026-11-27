@@ -19,9 +19,21 @@ for f in AGENTS.md CLAUDE.md ORCHESTRATION.md docs/GDD.md docs/STATUS.md; do
 done
 
 # Large-file guard (2 MB) — assets should be optimized; larger binaries need explicit review.
-large=$(git ls-files -z | xargs -0 -I{} sh -c 'test -f "{}" && s=$(wc -c < "{}") && [ "$s" -gt 2097152 ] && echo "{} ($s bytes)"' || true)
+large=""
+while IFS= read -r -d '' f; do
+  if [[ -f "$f" ]]; then
+    size=$(wc -c < "$f" | tr -d ' ')
+    if (( size > 2097152 )); then large+="$f ($size bytes)"$'\n'; fi
+  fi
+done < <(git ls-files -z)
 if [[ -n "$large" ]]; then
   echo "::error::Files over 2 MB are tracked:"; echo "$large"; exit 1
+fi
+
+# Finder/editor duplicates ("file 2.ext"), tracked or untracked-but-not-ignored.
+dups=$( { git ls-files; git ls-files --others --exclude-standard; } | grep -E ' [0-9]+(\.[^/]+)?$' || true)
+if [[ -n "$dups" ]]; then
+  echo "::error::Duplicate-looking files (e.g. 'name 2.ext') present:"; echo "$dups"; exit 1
 fi
 
 echo "hygiene: ok"

@@ -50,7 +50,7 @@ jobs:
       - name: Verify
         run: pnpm verify
       - name: Native bundle smoke (iOS + Android Metro export)
-        run: pnpm smoke:native
+        run: pnpm smoke:native && pnpm check:bundle:native
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Web smoke (Playwright, phone viewports; uses web export from verify)

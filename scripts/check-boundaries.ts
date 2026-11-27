@@ -6,8 +6,10 @@
  *  2. They must be declared in the importing package's package.json.
  *  3. Only subpaths listed in the target's `exports` may be imported (no deep/private imports).
  *  4. No relative import may escape its package root.
- *  5. Shipped game code (apps/game, packages/game-ui; non-test files) must not import exhaustive search,
- *     the generator or test fixtures.
+ *  5. Shipped game code — @ww/game and its whole runtime dependency closure (non-dev files) — must not
+ *     import exhaustive search, the generator or test fixtures, by package path or relative path.
+ *  6. No absolute import paths and no non-literal import()/require() (unverifiable).
+ *  Ground truth for the built bundle is scripts/check-bundle.ts (source maps).
  *
  * Run: node scripts/check-boundaries.ts
  */
@@ -33,10 +35,21 @@ const GAME_FORBIDDEN = [
   /^@ww\/puzzle-solver\/search(\/|$)/,
   /^@ww\/[^/]+\/testing(\/|$)/,
 ];
-const GAME_PACKAGES = new Set(['@ww/game', '@ww/game-ui']);
+/** Shipped-game entry package; GAME_FORBIDDEN applies to it and its whole runtime dependency closure. */
+const GAME_ENTRY = '@ww/game';
 
-/** Workspace packages may only import from these (dev-only) when inside test or script files. */
-const DEV_ONLY_OK_IN: RegExp = /(^|\/)(test|scripts)\/|\.test\.tsx?$|vitest\.config\.ts$/;
+/**
+ * Dev-only files (tests, tooling) — matched against the path relative to the PACKAGE ROOT only, so a
+ * shipped folder like src/game/scripts/ is not exempt.
+ */
+const DEV_ONLY_OK_IN: RegExp =
+  /^(test|tests|e2e|scripts)\/|\.test\.tsx?$|^(vitest|jest|playwright)\.config\.[cm]?ts$/;
+
+/** Private internals that shipped code must not reach even by relative path. */
+const PRIVATE_DIRS = /\/src\/(search|testing)\//;
+
+/** Any import()/require() whose argument is not a plain string literal (template or computed). */
+const NON_LITERAL_DYNAMIC = /\b(?:import|require(?:\.resolve)?)\s*\(\s*(?!['"])/g;
 
 interface Pkg {
   name: string;
@@ -87,10 +100,19 @@ function* sourceFiles(dir: string): Generator<string> {
 }
 
 const IMPORT_RE =
-  /(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)|require\(\s*['"]([^'"]+)['"]\s*\)|import\s+['"]([^'"]+)['"]/g;
+  /(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)|require(?:\.resolve)?\(\s*['"]([^'"]+)['"]\s*\)|import\s+['"]([^'"]+)['"]/g;
 
 const errors: string[] = [];
 const pkgs = readPackages();
+
+/** Runtime (non-dev) workspace dependency closure of the shipped game. */
+const gameClosure = new Set<string>();
+const visit = (name: string) => {
+  if (gameClosure.has(name)) return;
+  gameClosure.add(name);
+  for (const dep of pkgs.get(name)?.deps ?? []) if (dep.startsWith('@ww/')) visit(dep);
+};
+visit(GAME_ENTRY);
 
 for (const pkg of pkgs.values()) {
   const allowed = ALLOWED[pkg.name];
@@ -102,15 +124,25 @@ for (const pkg of pkgs.values()) {
     const rel = relative(pkg.dir, file);
     const isDevFile = DEV_ONLY_OK_IN.test(rel);
     const text = readFileSync(file, 'utf8');
+    const shipped = gameClosure.has(pkg.name) && !isDevFile;
+    if (!isDevFile)
+      for (const _ of text.matchAll(NON_LITERAL_DYNAMIC))
+        errors.push(`${relative(ROOT, file)}: non-literal import()/require() is not allowed (unverifiable)`);
     for (const m of text.matchAll(IMPORT_RE)) {
       const spec = m[1] ?? m[2] ?? m[3] ?? m[4];
       if (!spec) continue;
       const where = `${relative(ROOT, file)}: '${spec}'`;
 
+      if (spec.startsWith('/') || /^[A-Za-z]:[\\/]/.test(spec) || spec.startsWith('file:')) {
+        errors.push(`${where} absolute import paths are not allowed`);
+        continue;
+      }
       if (spec.startsWith('.')) {
         const target = resolve(dirname(file), spec);
         if (!target.startsWith(`${pkg.dir}/`) && target !== pkg.dir)
           errors.push(`${where} escapes package root`);
+        if (shipped && PRIVATE_DIRS.test(`${target}/`) && !PRIVATE_DIRS.test(file))
+          errors.push(`${where} reaches private search/testing internals from shipped code (ADR-0004)`);
         continue;
       }
       if (!spec.startsWith('@ww/')) continue;
@@ -131,7 +163,7 @@ for (const pkg of pkgs.values()) {
           `${where} not declared in ${pkg.name} ${isDevFile ? 'dependencies/devDependencies' : 'dependencies'}`,
         );
       if (!targetPkg.exports.has(subpath)) errors.push(`${where} is not a public export of ${target}`);
-      if (GAME_PACKAGES.has(pkg.name) && !isDevFile && GAME_FORBIDDEN.some((re) => re.test(spec)))
+      if (shipped && GAME_FORBIDDEN.some((re) => re.test(spec)))
         errors.push(`${where} is forbidden in the gameplay bundle (ADR-0004)`);
     }
   }

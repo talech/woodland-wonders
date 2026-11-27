@@ -17,9 +17,11 @@
     "content:validate": "pnpm --filter @ww/puzzle-content run validate",
     "build:web": "pnpm --filter @ww/game run build:web",
     "smoke:native": "pnpm --filter @ww/game run smoke:native",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm check:boundaries && pnpm test && pnpm content:validate && pnpm build:web",
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm check:boundaries && pnpm test && pnpm content:validate && pnpm build:web && pnpm check:bundle",
     "test:e2e": "playwright test",
-    "content:add": "pnpm --filter @ww/puzzle-content run add"
+    "content:add": "pnpm --filter @ww/puzzle-content run add",
+    "check:bundle": "node scripts/check-bundle.ts apps/game/dist/web",
+    "check:bundle:native": "node scripts/check-bundle.ts apps/game/dist/native"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",

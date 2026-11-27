@@ -10,8 +10,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "jest --ci",
-    "build:web": "expo export --platform web --output-dir dist/web",
-    "smoke:native": "expo export --platform ios --platform android --output-dir dist/native"
+    "build:web": "expo export --platform web --output-dir dist/web --source-maps",
+    "smoke:native": "expo export --platform ios --platform android --output-dir dist/native --source-maps"
   },
   "dependencies": {
     "@expo/metro-runtime": "~58.0.17",

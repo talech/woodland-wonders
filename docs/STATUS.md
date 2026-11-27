@@ -85,6 +85,24 @@ Non-blocking: the app icon/splash are Expo template defaults; the completion is 
 
 | 2026-11-26 | `0786a17` | Catalog v1 (40) + hints merged: verify (191 Vitest + 130 Jest), content 40/40, smoke:native, Playwright 10/10, CI | pass ([run](https://github.com/talech/woodland-wonders/actions/runs/45900411266)) |
 
+**Independent M1–M2 review (read-only agent, 2026-11-26): no blocking findings.**
+- Verified sound:
+  - search vs an independent brute force on 3,085 boards, 0 mismatches;
+  - 0 unsound eliminations, also with 2,334 random player-mark boards;
+  - every wrong player mark across 40 puzzles yields a contradiction, never a move;
+  - all 40 catalog puzzles independently unique;
+  - generator band claims hold;
+  - at 10×10: search ≤ 11 ms, hint ≤ 1.4 ms.
+- Resolved by the director:
+  - **#1 (major)** `check:boundaries` bypasses: the runtime-closure check now covers transitive packages; absolute paths and non-literal `import()` are rejected; the dev exemption is anchored at the package root; relative access to `src/search`/`src/testing` is blocked. The fixes were replayed against all reviewed bypasses. New `check:bundle` inspects source maps of the real web and native bundles (no search, generator, testing or content-script sources shipped).
+  - **#5** `content:validate` now checks stored `requiredTier` claims.
+  - **#7** The stray `pnpm-lock 2.yaml` (stale untracked snapshot) was moved to scratch; hygiene now rejects `name 2.ext` duplicates. A pre-existing bug was also found and fixed: the 2 MB large-file guard had silently never run (xargs error swallowed).
+- Delegated to M3 lane C3: **#2** hint text says "already has them" for deduced-but-unplaced animals; **#3** habitat copy should say "beside (not diagonally)".
+- Deferred:
+  - **#4** `species-capacity` premises cover the whole board, so hints highlight everything and the chain metric is inflated (sound, UX only; M4).
+  - **#5b** The editor keeps stale imported metrics/provenance after edits (`content:validate` now catches tier mismatches).
+- Accepted risk: **#6** shipped provenance seeds let someone with the generator reproduce solutions. The generator doesn't ship, and the in-game hint system can already derive every answer on device, so this adds no material exposure.
+
 Deferred product findings (M2): on a fresh board the first hint is usually a trivial `no-habitat` step (sound, but possibly low-value for experienced players; evaluate in M4). The hint panel shows about 3 lines at 360×640 and scrolls inside for long chains. The tutorial species and generator ids are covered by curation renaming (`<band>-NN`).
 
 Deferred findings (lane D2): importing a catalog puzzle flags every cell, because the painted-solution check runs against an empty painting (definitions carry no solution); the solver panel has no DOM tests; search runs on the main thread. Difficulty insight: 26/40 steps of meadow-004 are trivial `no-habitat` eliminations, so the generator must measure substantive steps (sent to B2).
