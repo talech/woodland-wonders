@@ -4,7 +4,8 @@
  * assets stay replaceable and gameplay code never references a drawing directly.
  */
 import type { ReactElement } from 'react';
-import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
+import { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
+import { HiddenSvg } from './HiddenSvg.tsx';
 import { palette } from './theme.ts';
 
 type Drawing = (color: string) => ReactElement;
@@ -137,14 +138,8 @@ export interface ArtProps {
 export function Art({ artKey, color, size }: ArtProps) {
   const draw = Object.hasOwn(DRAWINGS, artKey) ? (DRAWINGS[artKey] ?? fallback) : fallback;
   return (
-    <Svg
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
+    <HiddenSvg size={size} viewBox="0 0 100 100">
       {draw(color)}
-    </Svg>
+    </HiddenSvg>
   );
 }
