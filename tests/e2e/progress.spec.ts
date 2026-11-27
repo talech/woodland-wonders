@@ -40,7 +40,7 @@ test('progress survives reload; solving shows the scene and marks the level comp
 
   await page.waitForTimeout(700);
   await page.goto('/');
-  if (await page.getByTestId('coach-skip').count()) await page.getByTestId('coach-skip').click();
+  await page.getByTestId('coach-skip').click(); // first launch always shows the coach; click() waits (race fix)
   await page.goto('/');
   await expect(page.getByLabel(/beginner, completed/).first()).toBeVisible();
 });
