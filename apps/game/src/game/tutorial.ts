@@ -29,7 +29,7 @@ export const TUTORIAL_TEXT: Readonly<
   },
   habitat: {
     title: 'Foxes live by trees',
-    body: 'A fox must sit right next to a tree: above, below, left or right. Place a fox beside a tree.',
+    body: 'A fox must sit directly beside a tree: up, down, left or right, never diagonally. Place a fox beside a tree.',
   },
   touching: {
     title: 'Foxes never touch',

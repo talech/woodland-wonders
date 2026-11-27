@@ -29,7 +29,7 @@ export const RULES: readonly { readonly text: string; readonly art: ReactNode }[
     ),
   },
   {
-    text: 'Every animal lives right next to its home: above, below, left or right. Foxes by trees, mice by mushrooms, rabbits by burrows.',
+    text: 'Every animal lives directly beside its home: up, down, left or right, never diagonally. Foxes by trees, mice by mushrooms, rabbits by burrows.',
     art: (
       <View style={{ gap: 2 }}>
         {PAIRS.map(([s, h]) => (

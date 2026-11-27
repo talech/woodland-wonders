@@ -63,7 +63,7 @@ export function derivePuzzleView(session: Session): PuzzleView {
   const issues = cellIssues(evaluation);
   const highlight = new Set(tool.kind === 'species' ? acceptedHabitats(puzzle, tool.species) : []);
   const names = { species: speciesName, habitat: habitatName };
-  const hint = session.hint ? describeHint(session.hint, puzzle) : null;
+  const hint = session.hint ? describeHint(session.hint, puzzle, marks) : null;
   const hintMark = (cell: CellIndex) =>
     hint === null ? null : hint.focus === cell ? 'focus' : hint.region.has(cell) ? 'region' : null;
   const clueHinted = (id: string) => hint?.constraints.has(id) ?? false;

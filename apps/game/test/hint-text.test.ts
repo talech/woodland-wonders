@@ -60,10 +60,10 @@ describe('hint templates', () => {
 
   it('uses 1-based lines and presentation names', () => {
     expect(explainStep(step('line-saturated', { line: 'row', index: 2, target: 2 }), { puzzle })).toBe(
-      'Row 3 needs 2 animals and already has them, so every other cell in row 3 is empty.',
+      'Row 3 needs 2 animals and the steps above show where all 2 go, so every other cell in row 3 is empty.',
     );
     expect(explainStep(step('no-habitat', { cell: 0, row: 0, col: 0 }), { puzzle })).toBe(
-      'Row 1, column 1 isn’t next to a tree or mushroom, so a fox or a mouse can’t live there.',
+      'Row 1, column 1 has no tree or mushroom directly beside it (up, down, left or right), so a fox or a mouse can’t live there.',
     );
     expect(
       explainStep(step('species-group', { species: 'fox,mouse', target: 5 }, 'solver.species-group.forced'), {
@@ -94,7 +94,7 @@ describe('hint templates', () => {
         v('habitat:mouse', 'missing-habitat', [0], { species: 'mouse', habitats: 'mushroom' }),
         puzzle,
       ),
-    ).toBe('The mouse at row 1, column 1 has no mushroom next to it.');
+    ).toBe('The mouse at row 1, column 1 has no mushroom directly beside it.');
   });
 });
 
@@ -156,5 +156,49 @@ describe('describeHint', () => {
     expect(d.actions).toEqual([]);
     expect(d.region.size).toBe(0);
     expect(d.body.join(' ')).toMatch(/won’t guess/);
+  });
+});
+
+describe('"already placed" wording is only used when literally true', () => {
+  const saturated = (cells: number[]) => ({
+    ...step('line-saturated', { line: 'row', index: 0, target: 2 }),
+    premises: { constraints: ['row:0'], cells },
+  });
+  const exhausted = (cells: number[]) => ({
+    ...step('species-exhausted', { species: 'fox', target: 2 }),
+    premises: { constraints: ['species:fox'], cells },
+  });
+
+  it('branches on whether the relied-on cells are placed on the board', () => {
+    const marks = new Array(puzzle.cellCount).fill('unmarked');
+    marks[3] = 'fox';
+    marks[5] = 'mouse';
+    expect(explainStep(saturated([3, 5]), { puzzle, marks })).toMatch(/needs 2 animals and already has them/);
+    expect(explainStep(saturated([3, 4]), { puzzle, marks })).toMatch(/the steps above show where all 2 go/);
+    expect(explainStep(exhausted([3, 5]), { puzzle, marks })).toMatch(/the steps above show where all 2 go/);
+    marks[5] = 'fox';
+    expect(explainStep(exhausted([3, 5]), { puzzle, marks })).toMatch(/they are all already placed/);
+  });
+
+  it('holds for every hint step met while solving the whole catalog by hints', () => {
+    let deducedOnly = 0;
+    for (const def of CATALOG.puzzles) {
+      const p = createPuzzleOrThrow(def);
+      let s: Session = createSession(p);
+      for (let i = 0; i < p.cellCount; i++) {
+        s = sessionReducer(s, { type: 'requestHint' });
+        const h = s.hint;
+        if (h?.kind !== 'deduction') break;
+        const marks = s.game.board.marks;
+        for (const st of h.steps) {
+          const text = explainStep(st, { puzzle: p, marks });
+          if (/already has them|already placed/.test(text))
+            for (const c of st.premises.cells) expect(marks[c]).not.toMatch(/^(unmarked|empty)$/);
+          if (/the steps above show/.test(text)) deducedOnly++;
+        }
+        s = sessionReducer(sessionReducer(s, { type: 'revealHint' }), { type: 'applyHint' });
+      }
+    }
+    expect(deducedOnly).toBeGreaterThan(0); // the case the review found does occur in the catalog
   });
 });

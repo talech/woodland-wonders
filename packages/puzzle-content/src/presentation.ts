@@ -28,7 +28,7 @@ export const SPECIES_PRESENTATION: Readonly<Record<SpeciesId, SpeciesPresentatio
     glyph: 'F',
     artKey: 'species/fox',
     color: '#d9772b',
-    habitatHint: 'Lives next to a tree',
+    habitatHint: 'Lives beside a tree (not diagonally)',
   },
   mouse: {
     name: 'Mouse',
@@ -36,7 +36,7 @@ export const SPECIES_PRESENTATION: Readonly<Record<SpeciesId, SpeciesPresentatio
     glyph: 'M',
     artKey: 'species/mouse',
     color: '#8a8f99',
-    habitatHint: 'Lives next to a mushroom',
+    habitatHint: 'Lives beside a mushroom (not diagonally)',
   },
   rabbit: {
     name: 'Rabbit',
@@ -44,7 +44,7 @@ export const SPECIES_PRESENTATION: Readonly<Record<SpeciesId, SpeciesPresentatio
     glyph: 'R',
     artKey: 'species/rabbit',
     color: '#b59a7a',
-    habitatHint: 'Lives next to a burrow',
+    habitatHint: 'Lives beside a burrow (not diagonally)',
   },
 };
 

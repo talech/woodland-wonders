@@ -39,7 +39,7 @@ describe('PuzzleScreen', () => {
     expect(screen.getByRole('button', { name: 'Back to levels' })).toBeOnTheScreen();
     expect(screen.getByTestId('tool-fox')).toBeSelected();
     expect(screen.getByTestId('tool-mouse')).not.toBeSelected();
-    expect(screen.getByText('Lives next to a mushroom')).toBeOnTheScreen();
+    expect(screen.getByText('Lives beside a mushroom (not diagonally)')).toBeOnTheScreen();
     expect(screen.getAllByTestId(/^cell-\d+$/)).toHaveLength(25);
     expect(screen.getByTestId('action-undo')).toBeDisabled();
     expect(screen.getByTestId('action-redo')).toBeDisabled();

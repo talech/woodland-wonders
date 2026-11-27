@@ -17,7 +17,7 @@ function joinOr(items: readonly string[]): string {
 export function issueText(issue: CellIssue): string {
   return issue.kind === 'touching'
     ? `touching another ${lower(issue.speciesName)}`
-    : `needs a ${joinOr(issue.habitatNames.map(lower))} next to it`;
+    : `needs a ${joinOr(issue.habitatNames.map(lower))} directly beside it`;
 }
 
 /** e.g. "Row 2, column 3: fox", "… : empty", "… : unmarked", "… : tree (habitat)". Rows/columns are 1-based. */
@@ -62,7 +62,7 @@ export function clueLabel(axis: 'row' | 'column', index: number, count: CountSta
   return `${Axis} ${index + 1}: ${count.placed} of ${count.target} ${noun}${countSuffix(count)}`;
 }
 
-/** e.g. "Fox, 1 of 2 placed. Lives next to a tree". */
+/** e.g. "Fox, 1 of 2 placed. Lives beside a tree (not diagonally)". */
 export function speciesToolLabel(name: string, hint: string, count: CountStatus): string {
   const head = `${name}, ${count.placed} of ${count.target} placed${countSuffix(count)}`;
   return hint ? `${head}. ${hint}` : head;
@@ -72,7 +72,7 @@ export const STRINGS = {
   appTitle: 'Woodland Wonders',
   levelsHeading: 'Choose a clearing',
   levelsIntro:
-    'Place each animal next to its home. Animals of a kind never touch, not even corner to corner.',
+    'Place each animal directly beside its home: up, down, left or right. Animals of a kind never touch, not even corner to corner.',
   back: 'Back to levels',
   completeTitle: 'Scene complete!',
   completeMessage: 'Every animal has found a cosy spot in the woods.',
@@ -138,10 +138,11 @@ export function levelLabel(
   return parts.join(', ');
 }
 
-/** e.g. "New friend: mice live next to a mushroom." */
+/** e.g. "New friend: mice live directly beside a mushroom (up, down, left or right)." */
 export function speciesIntroText(species: string, habitats: readonly string[]): string {
   const homes = habitats.map((h) => habitatArt(h).name.toLocaleLowerCase('en'));
   const names = speciesInfo(species).plural.toLocaleLowerCase('en');
-  const where = homes.length === 0 ? 'anywhere' : `next to a ${homes.join(' or ')}`;
+  const where =
+    homes.length === 0 ? 'anywhere' : `directly beside a ${homes.join(' or ')} (up, down, left or right)`;
   return `New friend: ${names} live ${where}.`;
 }

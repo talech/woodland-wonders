@@ -81,7 +81,9 @@ describe('onboarding', () => {
   it('introduces a new species the first time its puzzle is opened', async () => {
     await renderRouter('./src/app', { initialUrl: '/puzzle/tutorial-03' });
     const intro = await screen.findByTestId('species-intro');
-    expect(within(intro).getByText('New friend: mice live next to a mushroom.')).toBeOnTheScreen();
+    expect(
+      within(intro).getByText('New friend: mice live directly beside a mushroom (up, down, left or right).'),
+    ).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Got it' }));
     expect(screen.queryByTestId('species-intro')).toBeNull();
   });
