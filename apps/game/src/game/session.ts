@@ -53,6 +53,8 @@ export type SessionAction =
   | { readonly type: 'tapCell'; readonly cell: CellIndex }
   | { readonly type: 'undo' }
   | { readonly type: 'redo' }
+  /** Clear every mark (core `clearAll`): a single undoable move. */
+  | { readonly type: 'reset' }
   | { readonly type: 'requestHint' }
   | { readonly type: 'revealHint' }
   | { readonly type: 'applyHint' }
@@ -147,6 +149,10 @@ export function sessionReducer(state: Session, action: SessionAction): Session {
     case 'redo': {
       const game = redo(state.game);
       return game ? withGame(state, game) : state;
+    }
+    case 'reset': {
+      const result = dispatch(state.puzzle, state.game, { type: 'clearAll' });
+      return result.ok ? withGame(state, result.game) : state;
     }
     case 'requestHint':
       return { ...state, hint: hintFor(state.puzzle, state.game) };

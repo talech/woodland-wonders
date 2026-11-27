@@ -78,6 +78,16 @@ export const STRINGS = {
   next: 'Next puzzle',
   backToList: 'Back to levels',
   closeHint: 'Close hint',
+  continue: 'Continue',
+  allComplete: 'Every clearing is complete. Lovely work! Replay any puzzle you like.',
+  completed: 'Completed',
+  inProgress: 'In progress',
+  nextUp: 'Next up',
+  reset: 'Reset',
+  resetLabel: 'Reset puzzle',
+  resetQuestion: 'Clear every mark on this board? You can undo this.',
+  resetConfirm: 'Clear board',
+  resetCancel: 'Keep playing',
   notFoundTitle: 'This clearing is hidden',
   notFoundMessage: "We couldn't find that puzzle. It may have moved.",
 } as const;
@@ -97,4 +107,25 @@ export function sizeSpoken(rows: number, columns: number): string {
 export function tierText(tier: string | undefined): string {
   if (!tier) return 'Unrated';
   return `${tier[0]?.toUpperCase() ?? ''}${tier.slice(1)}`;
+}
+
+const STATUS_SPOKEN = { completed: 'completed', 'in-progress': 'in progress', new: 'not started' } as const;
+
+/** e.g. "Level 5, beginner, completed, 5 by 5" (+ ", next up"). */
+export function levelLabel(
+  number: number,
+  tier: string | undefined,
+  status: 'completed' | 'in-progress' | 'new',
+  rows: number,
+  columns: number,
+  suggested: boolean,
+): string {
+  const parts = [
+    levelTitle(number),
+    tierText(tier).toLocaleLowerCase('en'),
+    STATUS_SPOKEN[status],
+    sizeSpoken(rows, columns),
+  ];
+  if (suggested) parts.push('next up');
+  return parts.join(', ');
 }

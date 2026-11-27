@@ -201,4 +201,24 @@ describe('PuzzleScreen', () => {
     expect(screen.queryByRole('button', { name: 'Next puzzle' })).toBeNull();
     expect(screen.getByTestId('complete-back')).toBeOnTheScreen();
   });
+
+  it('reset asks first, clears the board as one undoable move', async () => {
+    await renderPuzzle();
+    await tap(19);
+    await selectTool('mouse');
+    await tap(8);
+    await fireEvent.press(screen.getByRole('button', { name: 'Reset puzzle' }));
+    expect(screen.getByTestId('reset-confirm')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep playing' }));
+    expect(screen.queryByTestId('reset-confirm')).toBeNull();
+    expect(cell(19)).toHaveAccessibleName(/: fox$/);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Reset puzzle' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Clear board' }));
+    expect(cell(19)).toHaveAccessibleName(/: unmarked$/);
+    expect(cell(8)).toHaveAccessibleName(/: unmarked$/);
+    await fireEvent.press(screen.getByTestId('action-undo'));
+    expect(cell(19)).toHaveAccessibleName(/: fox$/);
+    expect(cell(8)).toHaveAccessibleName(/: mouse$/);
+  });
 });

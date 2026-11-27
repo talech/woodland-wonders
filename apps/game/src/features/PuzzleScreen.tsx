@@ -38,6 +38,7 @@ import { speciesArt } from '../game/presentation.ts';
 import { createSession, type SessionAction, sessionReducer } from '../game/session.ts';
 import { useReducedMotion } from '../game/useReducedMotion.ts';
 import { derivePuzzleView } from '../game/view.ts';
+import { ConfirmBar } from './ConfirmBar.tsx';
 import { ScreenHeader } from './ScreenHeader.tsx';
 
 const HINT_ACTIONS: Readonly<Record<HintActionId, SessionAction>> = {
@@ -141,6 +142,11 @@ export function PuzzleScreen({
   const onRedo = useCallback(() => send({ type: 'redo' }), []);
   const onHint = useCallback(() => send({ type: hintOpen ? 'dismissHint' : 'requestHint' }), [hintOpen]);
   const onDismissHint = useCallback(() => send({ type: 'dismissHint' }), []);
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const onConfirmReset = useCallback(() => {
+    send({ type: 'reset' });
+    setConfirmingReset(false);
+  }, []);
 
   const hint = view.hint;
   const announcement = hint?.announcement ?? null;
@@ -206,7 +212,26 @@ export function PuzzleScreen({
         testID="puzzle-scroll"
       >
         <View style={styles.chrome} onLayout={onChromeLayout} testID="puzzle-chrome">
-          <ScreenHeader title={title} {...(subtitle != null ? { subtitle } : {})} onBack={onBack} />
+          <ScreenHeader
+            title={title}
+            {...(subtitle != null ? { subtitle } : {})}
+            onBack={onBack}
+            action={{
+              label: STRINGS.reset,
+              accessibilityLabel: STRINGS.resetLabel,
+              onPress: () => setConfirmingReset(true),
+            }}
+          />
+          {confirmingReset && (
+            <ConfirmBar
+              testID="reset-confirm"
+              question={STRINGS.resetQuestion}
+              confirmLabel={STRINGS.resetConfirm}
+              cancelLabel={STRINGS.resetCancel}
+              onConfirm={onConfirmReset}
+              onCancel={() => setConfirmingReset(false)}
+            />
+          )}
           <SpeciesTray
             tools={view.tools}
             selectedId={tool.kind === 'species' ? tool.species : null}

@@ -74,3 +74,56 @@ describe('persistence flow', () => {
     expect(screen.getByRole('button', { name: /^Undo/ })).toBeEnabled();
   });
 });
+
+/** Solve the open puzzle by following hints (Hint → Show me → Apply) until the scene appears. */
+async function solveWithHints() {
+  for (let i = 0; i < 100 && !screen.queryByTestId('scene-complete'); i++) {
+    await fireEvent.press(screen.getByRole('button', { name: /^Hint/ }));
+    await fireEvent.press(screen.getByTestId('hint-action-reveal'));
+    await fireEvent.press(screen.getByTestId('hint-action-apply'));
+  }
+  expect(screen.getByTestId('scene-complete')).toBeOnTheScreen();
+}
+
+describe('progression flow', () => {
+  const [a, b, c] = CATALOG.puzzles;
+  if (!a || !b || !c) throw new Error('catalog too small');
+
+  it('complete → the list shows it completed and suggests the next one', async () => {
+    const r = await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.press(await screen.findByTestId(`level-${a.id}`));
+    await screen.findByTestId('cell-0');
+    await solveWithHints();
+    await fireEvent.press(screen.getByTestId('header-back'));
+    expect(r.getPathname()).toBe('/');
+    expect(await screen.findByTestId(`level-${a.id}`)).toHaveAccessibleName(
+      /^Level 1, tutorial, completed, /,
+    );
+    expect(screen.getByTestId(`level-${b.id}`)).toHaveAccessibleName(/next up$/);
+    await waitFor(
+      async () => {
+        const saved = JSON.parse((await AsyncStorage.getItem(SAVE_KEY)) ?? '{}');
+        expect(saved.progress[a.id].completedRevision).toBe(a.revision);
+        expect(Number.isNaN(Date.parse(saved.progress[a.id].completedAt))).toBe(false);
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it('"Next puzzle" goes to the next unsolved puzzle', async () => {
+    await AsyncStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        schemaVersion: 1,
+        progress: { [b.id]: { completedRevision: b.revision, completedAt: '2026-11-26T10:00:00.000Z' } },
+        active: {},
+        settings: { reducedMotion: 'system', onboardingDone: true },
+      }),
+    );
+    const r = await renderRouter('./src/app', { initialUrl: `/puzzle/${a.id}` });
+    await screen.findByTestId('cell-0');
+    await solveWithHints();
+    await fireEvent.press(screen.getByRole('button', { name: 'Next puzzle' }));
+    expect(r.getPathname()).toBe(`/puzzle/${c.id}`);
+  });
+});

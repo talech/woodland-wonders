@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { NotFound } from '../../features/NotFound.tsx';
 import { PuzzleScreen } from '../../features/PuzzleScreen.tsx';
 import { levelTitle, sizeText, tierText } from '../../game/labels.ts';
-import { findLevel, nextLevel } from '../../game/levels.ts';
+import { findLevel, nextUnsolved } from '../../game/levels.ts';
 import { useSave, useSaveStore } from '../../storage/SaveProvider.tsx';
 import { toGameState } from '../../storage/saveData.ts';
 
@@ -21,7 +21,7 @@ export default function PuzzleRoute() {
     return <View style={{ flex: 1, backgroundColor: palette.paper }} testID="puzzle-loading" />;
 
   const active = save.data.active[level.id];
-  const next = nextLevel(level.id);
+  const next = nextUnsolved(save.data, level.id);
   const { rows, columns, difficulty, revision } = level.definition;
   return (
     <PuzzleScreen
