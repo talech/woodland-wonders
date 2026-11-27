@@ -98,8 +98,15 @@ export function LevelList({ levels, statuses, suggestedId, onOpen, extra }: Leve
                   pressed && styles.pressed,
                 ]}
               >
-                <View style={[styles.badge, status === 'completed' && styles.badgeDone]}>
-                  <Text style={styles.badgeText}>{level.number}</Text>
+                {/* Decorative number disc (the card label says "Level N"); clamped so it fits its circle. */}
+                <View
+                  style={[styles.badge, status === 'completed' && styles.badgeDone]}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                >
+                  <Text style={styles.badgeText} maxFontSizeMultiplier={1.3}>
+                    {level.number}
+                  </Text>
                 </View>
                 <View style={styles.body}>
                   <View style={styles.nameRow}>
