@@ -139,6 +139,11 @@ describe('hints on the puzzle screen', () => {
     await press('action-hint');
     expect(screen.getAllByLabelText(/^Undo/)).toHaveLength(1);
     expect(screen.getAllByLabelText(/^Hint/)).toHaveLength(1);
+    expect(screen.getAllByLabelText(/^Reset puzzle/)).toHaveLength(1);
+    // The mode switch and animal row make room for the hint panel and come back when it closes.
+    expect(screen.queryByLabelText(/^Mark empty/)).toBeNull();
+    expect(screen.queryByLabelText(/^Fox, /)).toBeNull();
+    await press('action-hint');
     expect(screen.getAllByLabelText(/^Mark empty/)).toHaveLength(1);
     expect(screen.getAllByLabelText(/^Fox, /)).toHaveLength(1);
   });

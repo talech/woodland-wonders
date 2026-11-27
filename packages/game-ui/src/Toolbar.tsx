@@ -1,58 +1,62 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { EmptyMarkIcon, HintIcon, RedoIcon, UndoIcon } from './icons.tsx';
+import { BulbIcon, RedoIcon, ResetIcon, UndoIcon } from './icons.tsx';
 import { MIN_TOUCH, palette, radii } from './theme.ts';
 
 export interface ToolbarLabels {
-  readonly empty: string;
   readonly undo: string;
   readonly redo: string;
   readonly hint: string;
+  readonly reset: string;
+  /** Spoken name of the reset button (the visible label stays short). */
+  readonly resetSpoken: string;
 }
 
 export const DEFAULT_TOOLBAR_LABELS: ToolbarLabels = {
-  empty: 'Mark empty',
   undo: 'Undo',
   redo: 'Redo',
   hint: 'Hint',
+  reset: 'Reset',
+  resetSpoken: 'Reset puzzle',
 };
 
 export interface ToolbarProps {
-  readonly emptySelected: boolean;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
-  readonly onSelectEmpty: () => void;
   readonly onUndo: () => void;
   readonly onRedo: () => void;
   /** Request a hint. The hint button is omitted when not provided. */
   readonly onHint?: () => void;
   /** A hint is currently shown (selected state on the hint button). */
   readonly hintActive?: boolean;
+  /** Ask to clear the board. The reset button is omitted when not provided. */
+  readonly onReset?: () => void;
   readonly labels?: ToolbarLabels;
 }
 
 interface ButtonProps {
   readonly testID: string;
   readonly label: string;
-  readonly sublabel?: string;
+  readonly spoken?: string;
   readonly icon: ReactNode;
   readonly onPress?: () => void;
   readonly disabled?: boolean;
   readonly selected?: boolean;
+  readonly warm?: boolean;
 }
 
-function ToolButton({ testID, label, sublabel, icon, onPress, disabled = false, selected }: ButtonProps) {
-  const a11yLabel = sublabel ? `${label}, ${sublabel}` : label;
+function ToolButton({ testID, label, spoken, icon, onPress, disabled = false, selected, warm }: ButtonProps) {
   return (
     <Pressable
       testID={testID}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={a11yLabel}
+      accessibilityLabel={spoken ?? label}
       accessibilityState={selected === undefined ? { disabled } : { disabled, selected }}
       style={({ pressed }) => [
         styles.button,
+        warm && styles.warm,
         selected && styles.selected,
         disabled && styles.disabled,
         pressed && styles.pressed,
@@ -60,44 +64,35 @@ function ToolButton({ testID, label, sublabel, icon, onPress, disabled = false, 
     >
       {icon}
       <Text style={[styles.label, disabled && styles.labelDisabled]}>{label}</Text>
-      {sublabel != null && <Text style={styles.sublabel}>{sublabel}</Text>}
     </Pressable>
   );
 }
 
-/** Bottom tools: empty-mark tool, undo, redo and an optional disabled hint slot. */
+/** Bottom dock: undo, redo, hint and reset. Choosing what a tap does lives in the mode switch and animal row. */
 export function Toolbar({
-  emptySelected,
   canUndo,
   canRedo,
-  onSelectEmpty,
   onUndo,
   onRedo,
   onHint,
   hintActive = false,
+  onReset,
   labels = DEFAULT_TOOLBAR_LABELS,
 }: ToolbarProps) {
   const muted = palette.barkSoft;
   return (
     <View style={styles.bar} accessibilityRole="toolbar">
       <ToolButton
-        testID="tool-empty"
-        label={labels.empty}
-        icon={<EmptyMarkIcon size={24} />}
-        onPress={onSelectEmpty}
-        selected={emptySelected}
-      />
-      <ToolButton
         testID="action-undo"
         label={labels.undo}
-        icon={<UndoIcon size={24} color={canUndo ? palette.bark : muted} />}
+        icon={<UndoIcon size={26} color={canUndo ? palette.bark : muted} />}
         onPress={onUndo}
         disabled={!canUndo}
       />
       <ToolButton
         testID="action-redo"
         label={labels.redo}
-        icon={<RedoIcon size={24} color={canRedo ? palette.bark : muted} />}
+        icon={<RedoIcon size={26} color={canRedo ? palette.bark : muted} />}
         onPress={onRedo}
         disabled={!canRedo}
       />
@@ -105,9 +100,19 @@ export function Toolbar({
         <ToolButton
           testID="action-hint"
           label={labels.hint}
-          icon={<HintIcon size={24} color={palette.sky} />}
+          icon={<BulbIcon size={26} />}
           onPress={onHint}
           selected={hintActive}
+          warm
+        />
+      )}
+      {onReset && (
+        <ToolButton
+          testID="action-reset"
+          label={labels.reset}
+          spoken={labels.resetSpoken}
+          icon={<ResetIcon size={26} />}
+          onPress={onReset}
         />
       )}
     </View>
@@ -119,20 +124,21 @@ const styles = StyleSheet.create({
   button: {
     flexGrow: 1,
     flexBasis: 72,
-    minHeight: MIN_TOUCH + 8,
+    minHeight: MIN_TOUCH + 4,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    gap: 1,
+    paddingVertical: 4,
     paddingHorizontal: 4,
     borderRadius: radii.card,
     borderWidth: 2,
     borderColor: palette.grassEdge,
     backgroundColor: palette.card,
   },
-  selected: { borderWidth: 3, borderColor: palette.honey, backgroundColor: palette.honeySoft },
+  warm: { backgroundColor: palette.sunSoft, borderColor: palette.sunEdge },
+  selected: { borderWidth: 3, borderColor: palette.leaf },
   disabled: { backgroundColor: palette.paper, borderStyle: 'dashed' },
   pressed: { opacity: 0.85 },
-  label: { fontSize: 13, fontWeight: '700', color: palette.bark, textAlign: 'center' },
+  label: { fontSize: 14, fontWeight: '700', color: palette.bark, textAlign: 'center' },
   labelDisabled: { color: palette.barkSoft },
-  sublabel: { fontSize: 11, color: palette.barkSoft, textAlign: 'center' },
 });

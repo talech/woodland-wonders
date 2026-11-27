@@ -40,7 +40,7 @@ describe('onboarding', () => {
     expect(coachTitle()).toHaveTextContent('Foxes live by trees');
     await fireEvent.press(screen.getByTestId('cell-2')); // (0,2) beside the tree at (0,3)
     step(3);
-    await fireEvent.press(screen.getByRole('button', { name: /^Mark empty/ }));
+    await fireEvent.press(screen.getByRole('radio', { name: /^Mark empty/ }));
     step(4);
     await fireEvent.press(screen.getByTestId('cell-6'));
     step(5);

@@ -87,6 +87,8 @@ export const STRINGS = {
   inProgress: 'In progress',
   nextUp: 'Next up',
   reset: 'Reset',
+  helperEmpty: 'Tap a cell to mark it empty.',
+  helperPlace: (animal: string) => `Tap a cell to place a ${animal.toLocaleLowerCase('en')}.`,
   resetLabel: 'Reset puzzle',
   resetQuestion: 'Clear every mark on this board? You can undo this.',
   resetConfirm: 'Clear board',

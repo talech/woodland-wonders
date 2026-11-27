@@ -23,11 +23,13 @@ export const SCROLL_PADDING_TOP = 8;
 export const SCROLL_PADDING_BOTTOM = 12;
 export const SECTION_GAP = 12;
 /** Pre-measurement estimates (first frame only). */
-export const ESTIMATED_TOOLBAR_HEIGHT = 92;
-export const ESTIMATED_CHROME_HEIGHT = 170;
-/** Minimum width per tray card for the full habitat hint to be shown inside the card. */
-export const ROOMY_TOOL_WIDTH = 170;
-export const TRAY_GAP = 8;
+export const ESTIMATED_TOOLBAR_HEIGHT = 250;
+export const ESTIMATED_CHROME_HEIGHT = 64;
+/**
+ * Vertical space the cream backing around the board adds (padding 4 + border 2, top and bottom). Horizontally the
+ * backing hangs into the side padding, so width needs no allowance.
+ */
+export const BOARD_FRAME_V = 12;
 
 export interface Insets {
   readonly top: number;
@@ -95,19 +97,9 @@ export function boardSpaceHeight({
   return viewport - chrome - SCROLL_PADDING_TOP - SECTION_GAP - SCROLL_PADDING_BOTTOM;
 }
 
-/**
- * Compact tray: when cards would be too narrow for the habitat hint sentence, cards show art, name, count and a
- * habitat icon only (the full hint stays in the accessibility label). Larger text needs wider cards.
- */
-export function trayIsCompact(availableWidth: number, toolCount: number, fontScale: number): boolean {
-  if (toolCount <= 0) return false;
-  const perCard = (availableWidth - TRAY_GAP * (toolCount - 1)) / toolCount;
-  return perCard < ROOMY_TOOL_WIDTH * Math.max(1, fontScale);
-}
-
 /** Tray card flex-basis: wider for large text so cards wrap onto more rows instead of breaking words. */
 export function trayCardBasis(fontScale: number): number {
-  return Math.round(96 * Math.min(2.2, Math.max(1, fontScale)));
+  return Math.round(88 * Math.min(2.2, Math.max(1, fontScale)));
 }
 
 /** Gap between the hint panel and the toolbar (must match PuzzleScreen styles). */
@@ -131,6 +123,11 @@ export interface ScreenLayoutInput {
    * puzzle is not solved. Ignored while the hint panel is open (only one bottom panel shows at a time).
    */
   readonly sceneBanner?: number | null;
+  /**
+   * Height freed above the dock while a panel is open (the mode switch and animal row hide). Adds to the room the
+   * panel and board share; it never changes the closed-state board.
+   */
+  readonly extraRoom?: number;
 }
 
 /** Pre-measurement estimate of the compact completion banner. */
@@ -156,22 +153,37 @@ export function puzzleScreenLayout(input: ScreenLayoutInput): ScreenLayout {
     input.windowHeight - input.insets.top - input.insets.bottom - ESTIMATED_TOOLBAR_HEIGHT;
   const closed = computeBoardLayout({
     availableWidth,
-    availableHeight: boardSpaceHeight({ ...input, viewportHeight: closedViewport }),
+    availableHeight: boardSpaceHeight({ ...input, viewportHeight: closedViewport }) - BOARD_FRAME_V,
     rows,
     columns,
   });
-  const room = closedViewport - SCROLL_PADDING_TOP - SCROLL_PADDING_BOTTOM - HINT_PANEL_GAP;
+  const room =
+    closedViewport +
+    Math.max(0, input.extraRoom ?? 0) -
+    SCROLL_PADDING_TOP -
+    SCROLL_PADDING_BOTTOM -
+    HINT_PANEL_GAP;
   if (!hintOpen) {
     const banner = input.sceneBanner ?? null;
     if (banner === null) return { board: closed, hintPanelHeight: null };
     // Solved: header + tray scroll away so the whole scene stays visible above the banner; never grows.
-    const scene = computeBoardLayout({ availableWidth, availableHeight: room - banner, rows, columns });
+    const scene = computeBoardLayout({
+      availableWidth,
+      availableHeight: room - banner - BOARD_FRAME_V,
+      rows,
+      columns,
+    });
     return { board: scene.cellSize < closed.cellSize ? scene : closed, hintPanelHeight: null };
   }
 
-  const boardHeight = rows * closed.cellSize + closed.clueSize;
+  const boardHeight = rows * closed.cellSize + closed.clueSize + BOARD_FRAME_V;
   const minPanel = Math.round(MIN_HINT_PANEL * Math.min(1.4, Math.max(1, fontScale)));
   const panel = Math.min(MAX_HINT_PANEL, Math.max(minPanel, room - boardHeight));
-  const open = computeBoardLayout({ availableWidth, availableHeight: room - panel, rows, columns });
+  const open = computeBoardLayout({
+    availableWidth,
+    availableHeight: room - panel - BOARD_FRAME_V,
+    rows,
+    columns,
+  });
   return { board: open.cellSize < closed.cellSize ? open : closed, hintPanelHeight: panel };
 }

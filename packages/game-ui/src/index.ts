@@ -4,17 +4,27 @@ export { Board, type BoardProps } from './Board.tsx';
 export { Cell, type CellProps, type CellScene } from './Cell.tsx';
 export { ClueLabel, type ClueLabelProps } from './ClueLabel.tsx';
 export { HintPanel, type HintPanelAction, type HintPanelProps, type HintPanelStep } from './HintPanel.tsx';
+export { Foliage } from './Foliage.tsx';
 export {
   AlertIcon,
   BackIcon,
+  BulbIcon,
   CheckIcon,
   EmptyMarkIcon,
+  GearIcon,
   HintIcon,
   type IconProps,
   RedoIcon,
+  ResetIcon,
   SparkleIcon,
   UndoIcon,
 } from './icons.tsx';
+export {
+  DEFAULT_MODE_LABELS,
+  ModeSwitch,
+  type ModeSwitchLabels,
+  type ModeSwitchProps,
+} from './ModeSwitch.tsx';
 export { SceneComplete, type SceneCompleteProps } from './SceneComplete.tsx';
 export { SpeciesTray, type SpeciesTrayProps } from './SpeciesTray.tsx';
 export {

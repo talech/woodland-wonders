@@ -9,31 +9,22 @@ export interface SpeciesTrayProps {
   /** Currently selected species tool, or null when another tool (e.g. empty) is active. */
   readonly selectedId: string | null;
   readonly onSelect: (id: string) => void;
-  /**
-   * Compact cards show art, glyph, name, count and habitat icon only; the full habitat hint stays in the
-   * accessibility label. Use when cards would be too narrow for the hint sentence.
-   */
-  readonly compact?: boolean;
   /** Card flex-basis in pt. Grow it with the font scale so large text wraps cards, not words. */
   readonly cardBasis?: number;
 }
 
 /**
- * Animal tray: one selectable tool per species. Card content is stacked vertically so names get the full card
- * width; text is never truncated and wraps only at word boundaries.
+ * Animal row: one selectable card per species with its picture, its home and a corner badge showing how many
+ * are left to place (a tick when done, an alert shape when the count is off). The full habitat sentence lives in
+ * the accessibility label.
  */
-export function SpeciesTray({
-  tools,
-  selectedId,
-  onSelect,
-  compact = false,
-  cardBasis = 96,
-}: SpeciesTrayProps) {
+export function SpeciesTray({ tools, selectedId, onSelect, cardBasis = 96 }: SpeciesTrayProps) {
   return (
     <View style={styles.tray} accessibilityRole="toolbar" accessibilityLabel="Animals">
       {tools.map((tool) => {
         const selected = tool.id === selectedId;
         const { placed, target, status } = tool.count;
+        const left = Math.max(0, target - placed);
         return (
           <Pressable
             key={tool.id}
@@ -49,39 +40,33 @@ export function SpeciesTray({
               pressed && styles.pressed,
             ]}
           >
-            <View style={styles.topRow}>
-              <Art artKey={tool.art.artKey} color={tool.art.color} size={30} />
-              <Text style={styles.glyph} importantForAccessibility="no" accessibilityElementsHidden>
-                {tool.art.glyph}
-              </Text>
-              <View style={styles.spacer} />
+            <View style={styles.pictures}>
+              <Art artKey={tool.art.artKey} color={tool.art.color} size={44} />
+              <View style={styles.divider} />
               <View style={styles.habitats} testID={`tool-${tool.id}-habitats`}>
                 {tool.habitats.map((h) => (
-                  <Art key={h.artKey} artKey={h.artKey} color={h.color} size={18} />
+                  <Art key={h.artKey} artKey={h.artKey} color={h.color} size={28} />
                 ))}
               </View>
             </View>
             <Text style={styles.name}>{tool.art.name}</Text>
-            <View style={styles.countRow}>
-              <Text
-                style={[
-                  styles.count,
-                  status === 'satisfied' && styles.countDone,
-                  status === 'violated' && styles.countProblem,
-                ]}
-              >
-                {placed}/{target}
-              </Text>
-              {status === 'satisfied' && <CheckIcon size={16} />}
-              {status === 'violated' && <AlertIcon size={16} />}
-            </View>
             {tool.statusText != null && <Text style={styles.problemText}>{tool.statusText}</Text>}
-            {!compact && tool.habitatHint !== '' && <Text style={styles.hint}>{tool.habitatHint}</Text>}
-            {selected && (
-              <View style={styles.selectedBadge}>
-                <CheckIcon size={18} color={palette.honey} />
-              </View>
-            )}
+            <View
+              style={[
+                styles.badge,
+                status === 'satisfied' && styles.badgeDone,
+                status === 'violated' && styles.badgeProblem,
+              ]}
+              testID={`tool-${tool.id}-count`}
+            >
+              {status === 'satisfied' ? (
+                <CheckIcon size={16} color="#ffffff" />
+              ) : status === 'violated' ? (
+                <AlertIcon size={18} />
+              ) : (
+                <Text style={styles.badgeText}>{left}</Text>
+              )}
+            </View>
           </Pressable>
         );
       })}
@@ -90,12 +75,15 @@ export function SpeciesTray({
 }
 
 const styles = StyleSheet.create({
-  tray: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tray: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 8, justifyContent: 'center' },
   tool: {
     flexGrow: 1,
     flexShrink: 0,
-    minHeight: MIN_TOUCH,
-    gap: 2,
+    maxWidth: 200,
+    minHeight: MIN_TOUCH + 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: radii.card,
@@ -103,18 +91,28 @@ const styles = StyleSheet.create({
     borderColor: palette.grassEdge,
     backgroundColor: palette.card,
   },
-  selected: { borderWidth: 3, borderColor: palette.honey, backgroundColor: palette.honeySoft },
+  selected: { borderWidth: 4, borderColor: palette.leaf, backgroundColor: palette.leafSoft },
   pressed: { opacity: 0.85 },
-  topRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  spacer: { flexGrow: 1 },
-  glyph: { fontSize: 12, fontWeight: '800', color: palette.bark },
+  pictures: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  divider: { width: 1, height: 28, backgroundColor: palette.grassEdge },
   habitats: { flexDirection: 'row', gap: 2 },
-  name: { fontSize: 15, fontWeight: '700', color: palette.bark },
-  countRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  count: { fontSize: 15, fontWeight: '800', color: palette.bark, fontVariant: ['tabular-nums'] },
-  countDone: { color: palette.moss },
-  countProblem: { color: palette.berry },
+  name: { fontSize: 13, fontWeight: '700', color: palette.bark },
   problemText: { fontSize: 12, fontWeight: '600', color: palette.berry },
-  hint: { fontSize: 12, color: palette.barkSoft },
-  selectedBadge: { position: 'absolute', top: -9, right: -9 },
+  badge: {
+    position: 'absolute',
+    top: -9,
+    right: -6,
+    minWidth: 26,
+    minHeight: 26,
+    paddingHorizontal: 6,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.leaf,
+    borderWidth: 2,
+    borderColor: palette.card,
+  },
+  badgeDone: { backgroundColor: palette.moss },
+  badgeProblem: { backgroundColor: palette.berrySoft, borderColor: palette.berry },
+  badgeText: { fontSize: 15, fontWeight: '800', color: '#ffffff', fontVariant: ['tabular-nums'] },
 });

@@ -25,6 +25,8 @@ export interface BoardProps {
 }
 
 const HOP_STAGGER_MS = 160;
+/** Padding of the cream backing around the clues and grid (pt, per side; plus a 2 pt border). */
+const BACKING = 4;
 
 /** Puzzle grid with column clues above and row clues to the left. Purely prop-driven. */
 export function Board({
@@ -76,7 +78,7 @@ export function Board({
   const rowIndices = Array.from({ length: rows }, (_, r) => r);
   const colIndices = Array.from({ length: columns }, (_, c) => c);
   return (
-    <View style={styles.wrap} testID="board">
+    <View style={[styles.wrap, scene && styles.wrapScene]} testID="board">
       {scene && <View testID="board-scene" />}
       <View style={styles.line}>
         <View style={{ width: clueSize, height: clueSize }} />
@@ -136,7 +138,16 @@ export function Board({
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignSelf: 'center' },
+  // Cream backing card so the grid reads as one object on the meadow.
+  wrap: {
+    alignSelf: 'center',
+    padding: BACKING,
+    borderRadius: 20,
+    backgroundColor: palette.card,
+    borderWidth: 2,
+    borderColor: palette.grassEdge,
+  },
+  wrapScene: { backgroundColor: 'transparent', borderColor: 'transparent' },
   line: { flexDirection: 'row' },
-  field: { backgroundColor: palette.mossSoft },
+  field: { backgroundColor: palette.grass, borderRadius: 14, overflow: 'hidden' },
 });

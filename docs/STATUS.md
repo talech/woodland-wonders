@@ -29,6 +29,11 @@ Director-maintained. Reconcile with Git and CI on resume; historical evidence is
 | Remote | `github.com/talech/woodland-wonders` (public; owner changed visibility for Pages) |
 | CI | `hygiene` + `verify` (frozen install → verify → native export/inspection → Playwright) |
 
+## UI cleanup — 2026-11-27 (branch `feat/ui-cleanup`, not landed)
+- Puzzle screen rebuilt to the approved mockup: round back / centred level plaque / gear (opens How to play), cream board card with clue pills, Place / Mark empty switch, animal cards with a "left to place" badge, and an Undo / Redo / Hint / Reset dock. Chibi SVG art, greener palette, corner foliage. Presentation only; no rules, core, solver or save changes.
+- While a hint or the completion banner is open, the mode switch and animal row hide to give the board and panel room (the old test that required them to stay visible was rewritten for this).
+- Evidence: `pnpm verify` (191 Vitest + 188 Jest), native smoke + bundle check, Playwright 12/12; screenshots reviewed at 360×640 and 390×844. Device/simulator and OS large-text checks remain unverified.
+
 ## Blockers / limitations
 1. **Branch protection** unavailable on the current GitHub plan (T9 accepted). Enforced by CI + director policy.
 2. **Native toolchains absent locally** (no Xcode simulator, no JDK). Native coverage = CI Metro bundle export for iOS/Android + manual Expo Go. Device runs are **unverified**.

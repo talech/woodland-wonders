@@ -1,4 +1,5 @@
 import {
+  BOARD_FRAME_V,
   boardSpaceHeight,
   computeBoardLayout,
   contentWidth,
@@ -8,7 +9,6 @@ import {
   MIN_HINT_PANEL,
   puzzleScreenLayout,
   trayCardBasis,
-  trayIsCompact,
 } from '../src/game/layout';
 
 const noInsets = { top: 0, bottom: 0, left: 0, right: 0 };
@@ -90,18 +90,10 @@ describe('boardSpaceHeight', () => {
 });
 
 describe('tray sizing', () => {
-  it('is compact for three species at 360 pt and roomy on wide screens', () => {
-    expect(trayIsCompact(contentWidth(360, noInsets), 3, 1)).toBe(true);
-    expect(trayIsCompact(contentWidth(1024, noInsets), 3, 1)).toBe(false);
-    expect(trayIsCompact(contentWidth(360, noInsets), 1, 1)).toBe(false);
-  });
-
-  it('becomes compact sooner and uses wider cards for large text', () => {
-    expect(trayIsCompact(contentWidth(390, noInsets), 2, 1)).toBe(false);
-    expect(trayIsCompact(contentWidth(390, noInsets), 2, 1.5)).toBe(true);
-    expect(trayCardBasis(1)).toBe(96);
+  it('uses wider cards for large text, never narrower than the base', () => {
+    expect(trayCardBasis(1)).toBe(88);
     expect(trayCardBasis(2)).toBeGreaterThan(trayCardBasis(1.3));
-    expect(trayCardBasis(0.8)).toBe(96);
+    expect(trayCardBasis(0.8)).toBe(88);
   });
 });
 
@@ -123,7 +115,7 @@ describe('puzzleScreenLayout with the hint panel', () => {
     expect(l.board).toEqual(
       computeBoardLayout({
         availableWidth: base.availableWidth,
-        availableHeight: boardSpaceHeight({ ...base, viewportHeight: 552 }),
+        availableHeight: boardSpaceHeight({ ...base, viewportHeight: 552 }) - BOARD_FRAME_V,
         rows: 6,
         columns: 6,
       }),

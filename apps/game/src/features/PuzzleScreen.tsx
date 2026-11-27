@@ -1,7 +1,9 @@
 import {
   Board,
+  Foliage,
   HintPanel,
   type HintPanelAction,
+  ModeSwitch,
   palette,
   SceneComplete,
   SpeciesTray,
@@ -15,6 +17,7 @@ import {
   ScrollView,
   type ScrollViewInstance,
   StyleSheet,
+  Text,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -33,7 +36,6 @@ import {
   SECTION_GAP,
   SIDE_PADDING,
   trayCardBasis,
-  trayIsCompact,
 } from '../game/layout.ts';
 import { createSession, type SessionAction } from '../game/session.ts';
 import { createScreenState, screenReducer, TUTORIAL_STEPS, TUTORIAL_TEXT } from '../game/tutorial.ts';
@@ -41,11 +43,13 @@ import { useReducedMotion } from '../game/useReducedMotion.ts';
 import { derivePuzzleView } from '../game/view.ts';
 import { CoachCard } from './CoachCard.tsx';
 import { ConfirmBar } from './ConfirmBar.tsx';
-import { ScreenHeader } from './ScreenHeader.tsx';
+import { PuzzleHeader } from './PuzzleHeader.tsx';
 import { SpeciesIntro } from './SpeciesIntro.tsx';
 
-/** Vertical padding of the fixed bottom bar (its top border adds 1 pt). */
+/** Vertical padding of the fixed bottom bar. */
 const TOOLBAR_BAR_PADDING = 8;
+/** Gap between the stacked controls above the bottom bar's dock. */
+const TOOLS_GAP = 8;
 
 const HINT_ACTIONS: Readonly<Record<HintActionId, SessionAction>> = {
   reveal: { type: 'revealHint' },
@@ -60,6 +64,8 @@ export interface PuzzleScreenProps {
   readonly title: string;
   readonly subtitle?: string;
   readonly onBack: () => void;
+  /** Opens help (How to play) from the header gear. */
+  readonly onHelp?: () => void;
   /** Omit when there is no next puzzle. */
   readonly onNext?: () => void;
   /** Saved board + history to resume from. */
@@ -97,6 +103,7 @@ export function PuzzleScreen({
   title,
   subtitle,
   onBack,
+  onHelp,
   onNext,
   initialGame,
   onGameChange,
@@ -136,12 +143,20 @@ export function PuzzleScreen({
   const panelOpenRef = useRef(panelOpen);
   panelOpenRef.current = panelOpen;
   const [screenHeight, onScreenLayout] = useMeasuredHeight();
-  const [toolbarHeight, onToolbarLayout] = useMeasuredHeight();
+  const [toolbarHeight, onToolbarLayoutRaw] = useMeasuredHeight();
+  // Only the closed toolbar counts: the mode switch and animal row hide while a hint or the banner is open.
+  const onToolbarLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      if (!panelOpenRef.current) onToolbarLayoutRaw(e);
+    },
+    [onToolbarLayoutRaw],
+  );
   const [bannerHeight, onBannerLayout] = useMeasuredHeight();
+  const [dockHeight, onDockLayout] = useMeasuredHeight();
   const closedViewportHeight =
     screenHeight === null || toolbarHeight === null
       ? null
-      : screenHeight - insets.top - (TOOLBAR_BAR_PADDING * 2 + 1 + insets.bottom + toolbarHeight);
+      : screenHeight - insets.top - (TOOLBAR_BAR_PADDING * 2 + insets.bottom + toolbarHeight);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const boardY = useRef(0);
   const pendingBoardScroll = useRef(false);
@@ -168,12 +183,18 @@ export function PuzzleScreen({
     fontScale,
     hintOpen,
     sceneBanner: sceneOpen ? (bannerHeight ?? ESTIMATED_SCENE_BANNER) : null,
+    extraRoom: toolbarHeight !== null && dockHeight !== null ? toolbarHeight - dockHeight - TOOLS_GAP : 0,
   });
-  const compactTray = trayIsCompact(availableWidth, puzzle.species.length, fontScale);
 
   const onCellPress = useCallback((cell: number) => send({ type: 'tapCell', cell }), []);
   const onSelectSpecies = useCallback((species: string) => send({ type: 'selectSpecies', species }), []);
   const onSelectEmpty = useCallback(() => send({ type: 'selectEmpty' }), []);
+  // The Place segment returns to the last animal the player had selected (the first one initially).
+  const lastSpecies = useRef<string | null>(null);
+  const onPlace = useCallback(() => {
+    const id = lastSpecies.current ?? view.tools[0]?.id;
+    if (id) send({ type: 'selectSpecies', species: id });
+  }, [view.tools]);
   const onUndo = useCallback(() => send({ type: 'undo' }), []);
   const onRedo = useCallback(() => send({ type: 'redo' }), []);
   const onHint = useCallback(() => send({ type: hintOpen ? 'dismissHint' : 'requestHint' }), [hintOpen]);
@@ -238,6 +259,10 @@ export function PuzzleScreen({
   }, [view.solved]);
 
   const { tool, game } = session;
+  if (tool.kind === 'species') lastSpecies.current = tool.species;
+  const placeSpecies = view.tools.find(
+    (t) => t.id === (tool.kind === 'species' ? tool.species : (lastSpecies.current ?? view.tools[0]?.id)),
+  );
 
   return (
     <View
@@ -248,6 +273,7 @@ export function PuzzleScreen({
       onLayout={onScreenLayout}
       testID="puzzle-screen"
     >
+      <Foliage width={width} height={height} />
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
@@ -256,15 +282,11 @@ export function PuzzleScreen({
         testID="puzzle-scroll"
       >
         <View style={styles.chrome} onLayout={onChromeLayout} testID="puzzle-chrome">
-          <ScreenHeader
+          <PuzzleHeader
             title={title}
             {...(subtitle != null ? { subtitle } : {})}
             onBack={onBack}
-            action={{
-              label: STRINGS.reset,
-              accessibilityLabel: STRINGS.resetLabel,
-              onPress: () => setConfirmingReset(true),
-            }}
+            {...(onHelp ? { onHelp } : {})}
           />
           {tutorialStep && (
             <CoachCard
@@ -294,15 +316,8 @@ export function PuzzleScreen({
               onCancel={() => setConfirmingReset(false)}
             />
           )}
-          <SpeciesTray
-            tools={view.tools}
-            selectedId={tool.kind === 'species' ? tool.species : null}
-            onSelect={onSelectSpecies}
-            compact={compactTray}
-            cardBasis={trayCardBasis(fontScale)}
-          />
         </View>
-        <View onLayout={onBoardLayout} testID="puzzle-board-wrap">
+        <View style={styles.boardWrap} onLayout={onBoardLayout} testID="puzzle-board-wrap">
           <Board
             rows={puzzle.rows}
             columns={puzzle.columns}
@@ -353,17 +368,39 @@ export function PuzzleScreen({
               />
             </View>
           )}
-          <View onLayout={onToolbarLayout} testID="puzzle-toolbar-tools">
-            <Toolbar
-              emptySelected={tool.kind === 'empty'}
-              canUndo={canUndo(game)}
-              canRedo={canRedo(game)}
-              onSelectEmpty={onSelectEmpty}
-              onUndo={onUndo}
-              onRedo={onRedo}
-              onHint={onHint}
-              hintActive={hintOpen}
-            />
+          <View style={styles.tools} onLayout={onToolbarLayout} testID="puzzle-toolbar-tools">
+            {!panelOpen && (
+              <>
+                <ModeSwitch
+                  mode={tool.kind === 'empty' ? 'empty' : 'place'}
+                  species={placeSpecies?.art ?? null}
+                  onPlace={onPlace}
+                  onEmpty={onSelectEmpty}
+                />
+                <Text style={styles.helper}>
+                  {tool.kind === 'empty' || !placeSpecies
+                    ? STRINGS.helperEmpty
+                    : STRINGS.helperPlace(placeSpecies.art.name)}
+                </Text>
+                <SpeciesTray
+                  tools={view.tools}
+                  selectedId={tool.kind === 'species' ? tool.species : null}
+                  onSelect={onSelectSpecies}
+                  cardBasis={trayCardBasis(fontScale)}
+                />
+              </>
+            )}
+            <View onLayout={onDockLayout}>
+              <Toolbar
+                canUndo={canUndo(game)}
+                canRedo={canRedo(game)}
+                onUndo={onUndo}
+                onRedo={onRedo}
+                onHint={onHint}
+                hintActive={hintOpen}
+                onReset={() => setConfirmingReset(true)}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -378,18 +415,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIDE_PADDING,
     paddingTop: SCROLL_PADDING_TOP,
     paddingBottom: SCROLL_PADDING_BOTTOM,
+    flexGrow: 1,
     gap: SECTION_GAP,
     maxWidth: MAX_CONTENT_WIDTH,
     width: '100%',
     alignSelf: 'center',
   },
   chrome: { gap: SECTION_GAP },
+  // The board centres in whatever room the controls leave; when it fills the room this is a no-op.
+  boardWrap: { flexGrow: 1, justifyContent: 'center' },
+  tools: { gap: TOOLS_GAP },
   toolbarBar: {
     paddingTop: TOOLBAR_BAR_PADDING,
     paddingHorizontal: SIDE_PADDING,
-    borderTopWidth: 1,
-    borderTopColor: palette.grassEdge,
-    backgroundColor: palette.paper,
   },
+  helper: { fontSize: 14, color: palette.barkSoft, textAlign: 'center', marginTop: 6, marginBottom: 2 },
   toolbarInner: { maxWidth: MAX_CONTENT_WIDTH, width: '100%', alignSelf: 'center', gap: HINT_PANEL_GAP },
 });

@@ -4,19 +4,19 @@
  */
 export const palette = {
   /** Screen background — warm parchment. */
-  paper: '#f6f0e1',
+  paper: '#f6f1cf',
   /** Raised surfaces (cards, tray tools). */
-  card: '#fffaf0',
+  card: '#fffcec',
   /** Undecided grass cells. */
-  grass: '#e3ebcd',
-  grassEdge: '#c3d0a4',
+  grass: '#dcebc6',
+  grassEdge: '#b6cf98',
   /** Primary text and outlines — dark bark brown (≥ 7:1 on paper). */
-  bark: '#4a3a2c',
+  bark: '#2b4426',
   /** Secondary text (≥ 4.5:1 on paper and card). */
-  barkSoft: '#6e5b49',
+  barkSoft: '#54694a',
   /** Satisfied / confirmation. */
-  moss: '#3f6b2e',
-  mossSoft: '#dde9cf',
+  moss: '#2f6f28',
+  mossSoft: '#d3e8bb',
   /** Gentle contradiction marker (terracotta, not alarm red). */
   berry: '#a8462f',
   berrySoft: '#f6e0d6',
@@ -30,7 +30,14 @@ export const palette = {
   sky: '#2c6a87',
   skySoft: '#dcebf2',
   /** Habitat cell ground. */
-  soil: '#efe3cc',
+  soil: '#efe6c4',
+  /** Selected segment / selected card outline (white text on it is ≥ 4.5:1). */
+  leaf: '#3f7a24',
+  leafSoft: '#e2f1cc',
+  /** Warm yellow for the Hint button. */
+  sun: '#f7d54a',
+  sunSoft: '#fdf1b4',
+  sunEdge: '#e0b52c',
 } as const;
 
 export const radii = { cell: 8, card: 16, pill: 999 } as const;

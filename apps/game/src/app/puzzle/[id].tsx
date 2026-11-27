@@ -34,6 +34,7 @@ export default function PuzzleRoute() {
       title={levelTitle(level.number)}
       subtitle={`${sizeText(rows, columns)} · ${tierText(difficulty?.tier)}`}
       onBack={goBack}
+      onHelp={() => router.push('/how-to-play')}
       {...(active ? { initialGame: toGameState(level.id, active) } : {})}
       onGameChange={(game) => store.setActive(level.id, game)}
       onSolved={() => store.markCompleted(level.id, revision)}

@@ -39,7 +39,9 @@ describe('PuzzleScreen', () => {
     expect(screen.getByRole('button', { name: 'Back to levels' })).toBeOnTheScreen();
     expect(screen.getByTestId('tool-fox')).toBeSelected();
     expect(screen.getByTestId('tool-mouse')).not.toBeSelected();
-    expect(screen.getByText('Lives beside a mushroom (not diagonally)')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^Mouse, .*Lives beside a mushroom/ })).toBeOnTheScreen();
+    expect(screen.getByText('Tap a cell to place a fox.')).toBeOnTheScreen();
+    expect(screen.getByTestId('mode-place')).toBeSelected();
     expect(screen.getAllByTestId(/^cell-\d+$/)).toHaveLength(25);
     expect(screen.getByTestId('action-undo')).toBeDisabled();
     expect(screen.getByTestId('action-redo')).toBeDisabled();
@@ -63,16 +65,16 @@ describe('PuzzleScreen', () => {
   it('sizes the board from the measured screen minus the fixed toolbar', async () => {
     await renderPuzzle();
     const layout = (height: number) => ({ nativeEvent: { layout: { x: 0, y: 0, width: 360, height } } });
-    // Board region = screen − top inset 47 − toolbar bar (64 tools + 2·8 padding + 1 border + bottom inset 34).
-    const screenFor = (region: number) => region + 47 + 64 + 17 + 34;
+    // Board region = screen − top inset 47 − toolbar bar (64 tools + 2·8 padding + bottom inset 34).
+    const screenFor = (region: number) => region + 47 + 64 + 16 + 34;
     await fireEvent(screen.getByTestId('puzzle-chrome'), 'layout', layout(150));
     await fireEvent(screen.getByTestId('puzzle-toolbar-tools'), 'layout', layout(64));
     await fireEvent(screen.getByTestId('puzzle-screen'), 'layout', layout(screenFor(520)));
-    // 520 − 150 − 32 padding = 338 → 5 rows × cell + clue(0.7·cell) ≤ 338 → cell 59.
-    expect(cell(0)).toHaveStyle({ width: 59, height: 59 });
+    // 520 − 150 − 32 padding − 12 board backing = 326 → 5 rows × cell + clue(0.7·cell) ≤ 326 → cell 57.
+    expect(cell(0)).toHaveStyle({ width: 57, height: 57 });
     await fireEvent(screen.getByTestId('puzzle-screen'), 'layout', layout(screenFor(380)));
-    // 198 → cell 34.
-    expect(cell(0)).toHaveStyle({ width: 34, height: 34 });
+    // 186 → cell 32 (clue 24).
+    expect(cell(0)).toHaveStyle({ width: 32, height: 32 });
     await fireEvent(screen.getByTestId('puzzle-screen'), 'layout', layout(screenFor(200)));
     // Too short: never below 32 pt; the region scrolls instead.
     expect(cell(0)).toHaveStyle({ width: 32, height: 32 });
@@ -106,7 +108,7 @@ describe('PuzzleScreen', () => {
     expect(screen.getByTestId('tool-mouse')).toBeSelected();
     await tap(8);
     expect(screen.getByTestId('tool-mouse')).toHaveAccessibleName(/^Mouse, 1 of 2 placed/);
-    expect(screen.getByText('1/2')).toBeOnTheScreen();
+    expect(within(screen.getByTestId('tool-mouse-count')).getByText('1')).toBeOnTheScreen();
     expect(cell(8)).toHaveAccessibleName('Row 2, column 4: mouse');
   });
 
