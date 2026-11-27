@@ -126,7 +126,15 @@ export interface ScreenLayoutInput {
   readonly columns: number;
   readonly fontScale: number;
   readonly hintOpen: boolean;
+  /**
+   * Height of the completion banner shown above the toolbar (measured, or an estimate), or null when the
+   * puzzle is not solved. Ignored while the hint panel is open (only one bottom panel shows at a time).
+   */
+  readonly sceneBanner?: number | null;
 }
+
+/** Pre-measurement estimate of the compact completion banner. */
+export const ESTIMATED_SCENE_BANNER = 112;
 
 export interface ScreenLayout {
   readonly board: BoardLayout;
@@ -135,7 +143,7 @@ export interface ScreenLayout {
 }
 
 /**
- * Board and hint-panel sizes. Closed: the board fits below header + tray. Open: the screen scrolls header + tray
+ * Board, hint-panel and completion-banner sizes. Closed: the board fits below header + tray. Open: the screen scrolls header + tray
  * away and the panel takes the space the board doesn't need, within [MIN_HINT_PANEL, MAX_HINT_PANEL] (larger
  * minimum for large text). If the minimum panel leaves too little room, the board shrinks (never below 32 pt)
  * so it stays fully visible; it never grows when a hint opens. The panel height is fixed per board, so moving
@@ -152,9 +160,15 @@ export function puzzleScreenLayout(input: ScreenLayoutInput): ScreenLayout {
     rows,
     columns,
   });
-  if (!hintOpen) return { board: closed, hintPanelHeight: null };
-
   const room = closedViewport - SCROLL_PADDING_TOP - SCROLL_PADDING_BOTTOM - HINT_PANEL_GAP;
+  if (!hintOpen) {
+    const banner = input.sceneBanner ?? null;
+    if (banner === null) return { board: closed, hintPanelHeight: null };
+    // Solved: header + tray scroll away so the whole scene stays visible above the banner; never grows.
+    const scene = computeBoardLayout({ availableWidth, availableHeight: room - banner, rows, columns });
+    return { board: scene.cellSize < closed.cellSize ? scene : closed, hintPanelHeight: null };
+  }
+
   const boardHeight = rows * closed.cellSize + closed.clueSize;
   const minPanel = Math.round(MIN_HINT_PANEL * Math.min(1.4, Math.max(1, fontScale)));
   const panel = Math.min(MAX_HINT_PANEL, Math.max(minPanel, room - boardHeight));

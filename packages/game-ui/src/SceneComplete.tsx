@@ -19,6 +19,13 @@ export interface SceneCompleteProps {
   /** "Play again": clear the board and replay. */
   readonly replayLabel?: string;
   readonly onReplay?: () => void;
+  /**
+   * Compact banner (for the bottom bar under a solved board): title, one line, Next as the main button and
+   * Back / Play again as smaller text buttons, so the woodland scene stays the hero.
+   */
+  readonly compact?: boolean;
+  /** Shorter visible text for Back in compact mode; the accessible label stays `backLabel`. */
+  readonly backShortLabel?: string;
 }
 
 function HoppingAnimal({ art, delay, still }: { art: ArtSpec; delay: number; still: boolean }) {
@@ -63,7 +70,59 @@ export function SceneComplete({
   onBack,
   replayLabel,
   onReplay,
+  compact = false,
+  backShortLabel,
 }: SceneCompleteProps) {
+  if (compact)
+    return (
+      <View style={styles.banner} testID="scene-complete" accessibilityLiveRegion="polite">
+        <View style={styles.titleRow}>
+          <CheckIcon size={20} />
+          <Text style={styles.bannerTitle} accessibilityRole="header">
+            {title}
+          </Text>
+        </View>
+        <Text style={styles.bannerMessage}>{message}</Text>
+        <View style={styles.bannerActions}>
+          {onNext && (
+            <Pressable
+              testID="complete-next"
+              onPress={onNext}
+              accessibilityRole="button"
+              accessibilityLabel={nextLabel}
+              style={({ pressed }) => [
+                styles.button,
+                styles.primary,
+                styles.bannerNext,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={[styles.buttonText, styles.primaryText]}>{nextLabel}</Text>
+            </Pressable>
+          )}
+          <Pressable
+            testID="complete-back"
+            onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel={backLabel}
+            style={({ pressed }) => [styles.textButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.textButtonText}>{backShortLabel ?? backLabel}</Text>
+          </Pressable>
+          {onReplay && replayLabel && (
+            <Pressable
+              testID="complete-replay"
+              onPress={onReplay}
+              accessibilityRole="button"
+              accessibilityLabel={replayLabel}
+              style={({ pressed }) => [styles.textButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.textButtonText}>{replayLabel}</Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+    );
   return (
     <View style={styles.panel} testID="scene-complete" accessibilityLiveRegion="polite">
       <View style={styles.titleRow}>
@@ -142,6 +201,32 @@ const styles = StyleSheet.create({
     backgroundColor: palette.card,
   },
   primary: { backgroundColor: palette.moss },
+  banner: {
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radii.card,
+    borderWidth: 2,
+    borderColor: palette.moss,
+    backgroundColor: palette.mossSoft,
+  },
+  bannerTitle: { flexShrink: 1, fontSize: 18, fontWeight: '800', color: palette.bark },
+  bannerMessage: { fontSize: 13, color: palette.bark },
+  bannerActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 },
+  bannerNext: { flexGrow: 1 },
+  textButton: {
+    minHeight: MIN_TOUCH - 4,
+    minWidth: MIN_TOUCH,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+  },
+  textButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: palette.moss,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
   pressed: { opacity: 0.85 },
   buttonText: { fontSize: 16, fontWeight: '700', color: palette.moss, textAlign: 'center' },
   primaryText: { color: palette.card },

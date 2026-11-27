@@ -164,3 +164,35 @@ describe('puzzleScreenLayout with the hint panel', () => {
     expect(short.board.cellSize).toBeGreaterThanOrEqual(MIN_CELL);
   });
 });
+
+describe('puzzleScreenLayout with the completion banner', () => {
+  const base = {
+    availableWidth: contentWidth(360, noInsets),
+    chromeHeight: 260,
+    windowHeight: 640,
+    insets: noInsets,
+    fontScale: 1,
+    hintOpen: false,
+    // 640 minus a fixed toolbar bar of about 82 pt.
+    closedViewportHeight: 558,
+  };
+
+  it.each([
+    [6, 6],
+    [8, 8],
+  ])('a solved %i×%i board fits whole above the banner at 360×640', (rows, columns) => {
+    const banner = 112;
+    const closed = puzzleScreenLayout({ ...base, rows, columns });
+    const scene = puzzleScreenLayout({ ...base, rows, columns, sceneBanner: banner });
+    expect(scene.board.cellSize).toBeLessThanOrEqual(closed.board.cellSize);
+    expect(scene.board.cellSize).toBeGreaterThanOrEqual(MIN_CELL);
+    const region = 558 - banner - 8;
+    expect(rows * scene.board.cellSize + scene.board.clueSize).toBeLessThanOrEqual(region - 20);
+    expect(scene.hintPanelHeight).toBeNull();
+  });
+
+  it('the hint panel takes precedence over the banner', () => {
+    const l = puzzleScreenLayout({ ...base, rows: 6, columns: 6, hintOpen: true, sceneBanner: 112 });
+    expect(l.hintPanelHeight).not.toBeNull();
+  });
+});

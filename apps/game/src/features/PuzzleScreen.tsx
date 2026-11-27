@@ -23,6 +23,7 @@ import type { HintActionId } from '../game/hintText.ts';
 import { STRINGS } from '../game/labels.ts';
 import {
   contentWidth,
+  ESTIMATED_SCENE_BANNER,
   HINT_PANEL_GAP,
   MAX_CONTENT_WIDTH,
   MIN_HINT_PANEL,
@@ -42,6 +43,9 @@ import { CoachCard } from './CoachCard.tsx';
 import { ConfirmBar } from './ConfirmBar.tsx';
 import { ScreenHeader } from './ScreenHeader.tsx';
 import { SpeciesIntro } from './SpeciesIntro.tsx';
+
+/** Vertical padding of the fixed bottom bar (its top border adds 1 pt). */
+const TOOLBAR_BAR_PADDING = 8;
 
 const HINT_ACTIONS: Readonly<Record<HintActionId, SessionAction>> = {
   reveal: { type: 'revealHint' },
@@ -124,32 +128,33 @@ export function PuzzleScreen({
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion(reducedMotionSetting);
   const [chromeHeight, onChromeLayout] = useMeasuredHeight();
-  // The scroll viewport is measured only while the hint panel is closed; the open layout derives from it.
+  // The board region's "closed" height (no bottom panel) is derived from the screen and the toolbar alone, so
+  // it is known even when a puzzle opens already solved with the completion banner showing.
   const hintOpen = session.hint !== null;
-  const hintOpenRef = useRef(hintOpen);
-  hintOpenRef.current = hintOpen;
-  const [closedViewportHeight, setClosedViewportHeight] = useState<number | null>(null);
+  const sceneOpen = view.solved && !hintOpen;
+  const panelOpen = hintOpen || sceneOpen;
+  const panelOpenRef = useRef(panelOpen);
+  panelOpenRef.current = panelOpen;
+  const [screenHeight, onScreenLayout] = useMeasuredHeight();
+  const [toolbarHeight, onToolbarLayout] = useMeasuredHeight();
+  const [bannerHeight, onBannerLayout] = useMeasuredHeight();
+  const closedViewportHeight =
+    screenHeight === null || toolbarHeight === null
+      ? null
+      : screenHeight - insets.top - (TOOLBAR_BAR_PADDING * 2 + 1 + insets.bottom + toolbarHeight);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const boardY = useRef(0);
   const pendingBoardScroll = useRef(false);
   const scrollToBoard = useCallback((animated: boolean) => {
     scrollRef.current?.scrollTo({ y: Math.max(0, boardY.current - SCROLL_PADDING_TOP), animated });
   }, []);
-  const onViewportLayout = useCallback(
-    (e: LayoutChangeEvent) => {
-      if (hintOpenRef.current) {
-        // The viewport just shrank for the hint panel: scroll now that the new size is known.
-        if (pendingBoardScroll.current) {
-          pendingBoardScroll.current = false;
-          scrollToBoard(false);
-        }
-        return;
-      }
-      const next = Math.round(e.nativeEvent.layout.height);
-      setClosedViewportHeight((prev) => (prev === next ? prev : next));
-    },
-    [scrollToBoard],
-  );
+  const onViewportLayout = useCallback(() => {
+    // The viewport just changed for a bottom panel: scroll now that the new size is known.
+    if (panelOpenRef.current && pendingBoardScroll.current) {
+      pendingBoardScroll.current = false;
+      scrollToBoard(false);
+    }
+  }, [scrollToBoard]);
 
   const availableWidth = contentWidth(width, insets);
   const { board: layout, hintPanelHeight } = puzzleScreenLayout({
@@ -162,6 +167,7 @@ export function PuzzleScreen({
     columns: puzzle.columns,
     fontScale,
     hintOpen,
+    sceneBanner: sceneOpen ? (bannerHeight ?? ESTIMATED_SCENE_BANNER) : null,
   });
   const compactTray = trayIsCompact(availableWidth, puzzle.species.length, fontScale);
 
@@ -195,14 +201,19 @@ export function PuzzleScreen({
       })),
     [hint],
   );
-  // When a hint opens, scroll header + tray away so the whole board (and every highlight) is visible.
-  const onBoardLayout = useCallback((e: LayoutChangeEvent) => {
-    boardY.current = e.nativeEvent.layout.y;
-  }, []);
+  // When a hint or the completion banner opens, scroll header + tray away so the whole board (every highlight,
+  // or the finished woodland scene) is visible above it.
+  const onBoardLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      boardY.current = e.nativeEvent.layout.y;
+      if (panelOpenRef.current && pendingBoardScroll.current) scrollToBoard(false);
+    },
+    [scrollToBoard],
+  );
   useEffect(() => {
-    pendingBoardScroll.current = hintOpen;
-    if (hintOpen) scrollToBoard(!reducedMotion);
-  }, [hintOpen, reducedMotion, scrollToBoard]);
+    pendingBoardScroll.current = panelOpen;
+    if (panelOpen) scrollToBoard(!reducedMotion);
+  }, [panelOpen, reducedMotion, scrollToBoard]);
   const hintSteps = useMemo(() => (hint?.steps ?? []).map((text, i) => ({ key: `step-${i}`, text })), [hint]);
 
   // Persist every board change (the initial, restored board is not a change).
@@ -234,6 +245,8 @@ export function PuzzleScreen({
         styles.screen,
         { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right },
       ]}
+      onLayout={onScreenLayout}
+      testID="puzzle-screen"
     >
       <ScrollView
         ref={scrollRef}
@@ -289,20 +302,6 @@ export function PuzzleScreen({
             cardBasis={trayCardBasis(fontScale)}
           />
         </View>
-        {view.solved && (
-          <SceneComplete
-            animals={[]}
-            reducedMotion={reducedMotion}
-            title={STRINGS.completeTitle}
-            message={STRINGS.completeMessage}
-            nextLabel={STRINGS.next}
-            backLabel={STRINGS.backToList}
-            onBack={onBack}
-            replayLabel={STRINGS.playAgain}
-            onReplay={onReplay}
-            {...(onNext ? { onNext } : {})}
-          />
-        )}
         <View onLayout={onBoardLayout} testID="puzzle-board-wrap">
           <Board
             rows={puzzle.rows}
@@ -318,7 +317,10 @@ export function PuzzleScreen({
           />
         </View>
       </ScrollView>
-      <View style={[styles.toolbarBar, { paddingBottom: insets.bottom + 8 }]} testID="puzzle-toolbar">
+      <View
+        style={[styles.toolbarBar, { paddingBottom: insets.bottom + TOOLBAR_BAR_PADDING }]}
+        testID="puzzle-toolbar"
+      >
         <View style={styles.toolbarInner}>
           {hint && (
             <HintPanel
@@ -333,16 +335,36 @@ export function PuzzleScreen({
               height={hintPanelHeight ?? MIN_HINT_PANEL}
             />
           )}
-          <Toolbar
-            emptySelected={tool.kind === 'empty'}
-            canUndo={canUndo(game)}
-            canRedo={canRedo(game)}
-            onSelectEmpty={onSelectEmpty}
-            onUndo={onUndo}
-            onRedo={onRedo}
-            onHint={onHint}
-            hintActive={hintOpen}
-          />
+          {sceneOpen && (
+            <View onLayout={onBannerLayout}>
+              <SceneComplete
+                compact
+                animals={[]}
+                reducedMotion={reducedMotion}
+                title={STRINGS.completeTitle}
+                message={STRINGS.completeMessage}
+                nextLabel={STRINGS.next}
+                backLabel={STRINGS.backToList}
+                backShortLabel={STRINGS.levelsShort}
+                onBack={onBack}
+                replayLabel={STRINGS.playAgain}
+                onReplay={onReplay}
+                {...(onNext ? { onNext } : {})}
+              />
+            </View>
+          )}
+          <View onLayout={onToolbarLayout} testID="puzzle-toolbar-tools">
+            <Toolbar
+              emptySelected={tool.kind === 'empty'}
+              canUndo={canUndo(game)}
+              canRedo={canRedo(game)}
+              onSelectEmpty={onSelectEmpty}
+              onUndo={onUndo}
+              onRedo={onRedo}
+              onHint={onHint}
+              hintActive={hintOpen}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -363,7 +385,7 @@ const styles = StyleSheet.create({
   },
   chrome: { gap: SECTION_GAP },
   toolbarBar: {
-    paddingTop: 8,
+    paddingTop: TOOLBAR_BAR_PADDING,
     paddingHorizontal: SIDE_PADDING,
     borderTopWidth: 1,
     borderTopColor: palette.grassEdge,

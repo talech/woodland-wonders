@@ -103,11 +103,15 @@ function CellImpl({ model, index, size, onPress, scene = null, hopDelay = 0 }: C
               styles.frame,
               ring,
               { backgroundColor: ground },
+              // In the scene, outlines go at once and grass/empty cells merge straight into the meadow; habitat
+              // and animal tiles fade out (instantly-ish under reduced motion).
+              scene && styles.sceneFrame,
+              scene && (content.kind === 'unmarked' || content.kind === 'empty') && styles.meadow,
               scene && { opacity: fade(scene.progress) },
             ]}
             testID={`cell-${index}-frame`}
           >
-            {content.kind === 'empty' && <EmptyMarkIcon size={Math.round(inner * 0.5)} />}
+            {!scene && content.kind === 'empty' && <EmptyMarkIcon size={Math.round(inner * 0.5)} />}
           </Animated.View>
           {(content.kind === 'habitat' || content.kind === 'animal') && (
             <>
@@ -172,6 +176,8 @@ export const Cell = memo(CellImpl, sameCell);
 const styles = StyleSheet.create({
   inner: { alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   frame: { borderRadius: radii.cell, alignItems: 'center', justifyContent: 'center' },
+  sceneFrame: { borderWidth: 0 },
+  meadow: { backgroundColor: 'transparent' },
   glyph: {
     position: 'absolute',
     right: 2,

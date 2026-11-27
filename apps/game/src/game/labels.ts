@@ -77,6 +77,7 @@ export const STRINGS = {
   completeTitle: 'Scene complete!',
   completeMessage: 'Every animal has found a cosy spot in the woods.',
   playAgain: 'Play again',
+  levelsShort: 'Levels',
   next: 'Next puzzle',
   backToList: 'Back to levels',
   closeHint: 'Close hint',

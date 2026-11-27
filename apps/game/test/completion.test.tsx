@@ -78,8 +78,24 @@ describe('completion scene', () => {
     const panel = screen.getByTestId('scene-complete');
     for (const name of ['Next puzzle', 'Back to levels', 'Play again'])
       expect(within(panel).getByRole('button', { name })).toBeOnTheScreen();
+    // The celebration is a compact banner in the fixed bottom bar; the scene (board) is the hero above it.
+    expect(within(screen.getByTestId('puzzle-toolbar')).getByTestId('scene-complete')).toBeOnTheScreen();
+    expect(within(screen.getByTestId('puzzle-scroll')).queryByTestId('scene-complete')).toBeNull();
+    expect(within(panel).getByText('Levels')).toBeOnTheScreen(); // short visible text, full spoken label
     // Cells and controls remain usable: the scene never locks the board.
     expect(screen.getByRole('button', { name: /^Undo/ })).toBeEnabled();
+  });
+
+  it('grass and empty cells merge into the meadow: no outlines, no tile ground, no empty marks', async () => {
+    const game = solvedGame();
+    await renderScreen(game, 'on');
+    game.board.marks.forEach((mark, i) => {
+      const frame = screen.getByTestId(`cell-${i}-frame`);
+      expect(frame).toHaveStyle({ borderWidth: 0 });
+      if (puzzle.habitatAt[i] == null && (mark === 'unmarked' || mark === 'empty'))
+        expect(frame).toHaveStyle({ backgroundColor: 'transparent' });
+    });
+    expect(screen.queryAllByTestId(/^cell-\d+-frame$/)).toHaveLength(puzzle.cellCount);
   });
 
   it('reduced motion: no movement, the scene still appears', async () => {
