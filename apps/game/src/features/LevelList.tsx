@@ -118,9 +118,7 @@ export function LevelList({ levels, statuses, suggestedId, onOpen, extra }: Leve
                       </View>
                     )}
                   </View>
-                  <Text style={styles.meta}>
-                    {sizeText(rows, columns)} · {level.id}
-                  </Text>
+                  <Text style={styles.meta}>{sizeText(rows, columns)}</Text>
                   <View style={styles.footer}>
                     <View style={styles.animals}>
                       {level.puzzle.species.map((id) => {
