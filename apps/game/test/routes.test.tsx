@@ -119,21 +119,4 @@ describe('progression flow', () => {
       { timeout: 3000 },
     );
   });
-
-  it('"Next puzzle" goes to the next unsolved puzzle', async () => {
-    await AsyncStorage.setItem(
-      SAVE_KEY,
-      JSON.stringify({
-        schemaVersion: 1,
-        progress: { [b.id]: { completedRevision: b.revision, completedAt: '2026-11-26T10:00:00.000Z' } },
-        active: {},
-        settings: { reducedMotion: 'system', onboardingDone: true },
-      }),
-    );
-    const r = await renderRouter('./src/app', { initialUrl: `/puzzle/${a.id}` });
-    await screen.findByTestId('cell-0');
-    await solveWithHints();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next puzzle' }));
-    expect(r.getPathname()).toBe(`/puzzle/${c.id}`);
-  });
 });

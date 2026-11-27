@@ -189,6 +189,28 @@ describe('save store', () => {
     expect(listener).toHaveBeenCalledTimes(3);
   });
 
+  it('writes milestones (completion, settings) on the next tick instead of after the debounce', async () => {
+    const storage = createMemoryStorage();
+    const store = createSaveStore({ adapter: storage, findPuzzle, debounceMs: 500 });
+    await store.load();
+    store.setActive('tiny-4x4', play(tiny, [2]));
+    store.markCompleted('tiny-4x4', 1);
+    jest.advanceTimersByTime(0);
+    await Promise.resolve();
+    expect(
+      decodeSave(storage.data.get(SAVE_KEY) ?? null, findPuzzle).data.progress['tiny-4x4'],
+    ).toBeDefined();
+    storage.data.clear();
+    store.updateSettings({ onboardingDone: true });
+    jest.advanceTimersByTime(0);
+    await Promise.resolve();
+    expect(storage.data.has(SAVE_KEY)).toBe(true);
+    storage.data.clear();
+    store.setActive('tiny-4x4', play(tiny, [9]));
+    jest.advanceTimersByTime(499);
+    expect(storage.data.has(SAVE_KEY)).toBe(false); // ordinary moves stay debounced
+  });
+
   it('backs up a corrupt save under a counter key, starts from defaults, and never throws', async () => {
     const storage = createMemoryStorage({ [SAVE_KEY]: '{broken', [`${BACKUP_KEY_PREFIX}1`]: 'older' });
     const store = createSaveStore({ adapter: storage, findPuzzle });
