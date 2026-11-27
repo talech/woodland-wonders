@@ -1,20 +1,64 @@
-import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { memo, type ReactNode, useEffect, useRef } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Art } from './art.tsx';
 import { AlertIcon, EmptyMarkIcon, HintIcon, SparkleIcon } from './icons.tsx';
 import { palette, radii } from './theme.ts';
 import type { CellModel } from './types.ts';
+
+/** Completion-scene state shared by every cell of a board (stable object per scene state). */
+export interface CellScene {
+  /** 0 = puzzle grid, 1 = woodland scene (grid lines and ground faded away). */
+  readonly progress: Animated.Value;
+  /** Animals do a small idle hop (false under reduced motion). */
+  readonly hop: boolean;
+}
 
 export interface CellProps {
   readonly model: CellModel;
   readonly index: number;
   readonly size: number;
   readonly onPress: (index: number) => void;
+  /** Present while the completion scene is shown. */
+  readonly scene?: CellScene | null;
+  /** Stagger for the idle hop, in ms. */
+  readonly hopDelay?: number;
+}
+
+/** Small staggered idle hop; stops (and settles) when disabled or unmounted. Interruptible by design. */
+function Hop({ active, delay, children }: { active: boolean; delay: number; children: ReactNode }) {
+  const y = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!active) {
+      y.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(y, {
+          toValue: -5,
+          duration: 240,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(y, { toValue: 0, duration: 300, easing: Easing.bounce, useNativeDriver: true }),
+        Animated.delay(1400),
+      ]),
+    );
+    loop.start();
+    return () => {
+      loop.stop();
+      y.setValue(0);
+    };
+  }, [active, delay, y]);
+  return <Animated.View style={{ transform: [{ translateY: y }] }}>{children}</Animated.View>;
 }
 
 const GAP = 2;
 
-function CellImpl({ model, index, size, onPress }: CellProps) {
+const fade = (progress: Animated.Value) => progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+
+function CellImpl({ model, index, size, onPress, scene = null, hopDelay = 0 }: CellProps) {
   const { content, flagged, highlighted, hint } = model;
   const inner = size - GAP * 2;
   const badge = Math.max(10, Math.round(size * 0.3));
@@ -51,20 +95,29 @@ function CellImpl({ model, index, size, onPress }: CellProps) {
       style={{ width: size, height: size, padding: GAP }}
     >
       {({ pressed }) => (
-        <View
-          style={[
-            styles.inner,
-            ring,
-            { width: inner, height: inner, backgroundColor: ground, opacity: pressed ? 0.8 : 1 },
-          ]}
-        >
+        <View style={[styles.inner, { width: inner, height: inner, opacity: pressed ? 0.8 : 1 }]}>
+          {/* Grid frame: ground, ring and marks. Fades away in the completion scene. */}
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.frame,
+              ring,
+              { backgroundColor: ground },
+              scene && { opacity: fade(scene.progress) },
+            ]}
+            testID={`cell-${index}-frame`}
+          >
+            {content.kind === 'empty' && <EmptyMarkIcon size={Math.round(inner * 0.5)} />}
+          </Animated.View>
           {(content.kind === 'habitat' || content.kind === 'animal') && (
             <>
-              <Art
-                artKey={content.art.artKey}
-                color={content.art.color}
-                size={Math.round(inner * (isHabitat ? 0.62 : 0.68))}
-              />
+              <Hop active={scene?.hop === true && content.kind === 'animal'} delay={hopDelay}>
+                <Art
+                  artKey={content.art.artKey}
+                  color={content.art.color}
+                  size={Math.round(inner * (isHabitat ? 0.62 : 0.68))}
+                />
+              </Hop>
               <Text
                 style={[styles.glyph, { fontSize: glyphSize }]}
                 maxFontSizeMultiplier={1.2}
@@ -75,8 +128,7 @@ function CellImpl({ model, index, size, onPress }: CellProps) {
               </Text>
             </>
           )}
-          {content.kind === 'empty' && <EmptyMarkIcon size={Math.round(inner * 0.5)} />}
-          {highlighted && (
+          {!scene && highlighted && (
             <View style={[styles.badge, styles.topLeft]}>
               <SparkleIcon size={badge} />
             </View>
@@ -108,7 +160,9 @@ function sameCell(a: CellProps, b: CellProps): boolean {
     a.model.highlighted === b.model.highlighted &&
     a.model.hint === b.model.hint &&
     a.model.accessibilityHint === b.model.accessibilityHint &&
-    a.model.content.kind === b.model.content.kind
+    a.model.content.kind === b.model.content.kind &&
+    a.scene === b.scene &&
+    a.hopDelay === b.hopDelay
   );
 }
 
@@ -116,7 +170,8 @@ function sameCell(a: CellProps, b: CellProps): boolean {
 export const Cell = memo(CellImpl, sameCell);
 
 const styles = StyleSheet.create({
-  inner: { borderRadius: radii.cell, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
+  inner: { alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
+  frame: { borderRadius: radii.cell, alignItems: 'center', justifyContent: 'center' },
   glyph: {
     position: 'absolute',
     right: 2,

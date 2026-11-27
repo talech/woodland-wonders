@@ -34,7 +34,6 @@ import {
   trayCardBasis,
   trayIsCompact,
 } from '../game/layout.ts';
-import { speciesArt } from '../game/presentation.ts';
 import { createSession, type SessionAction } from '../game/session.ts';
 import { createScreenState, screenReducer, TUTORIAL_STEPS, TUTORIAL_TEXT } from '../game/tutorial.ts';
 import { useReducedMotion } from '../game/useReducedMotion.ts';
@@ -71,6 +70,8 @@ export interface PuzzleScreenProps {
   readonly onTutorialEnd?: (reason: 'finished' | 'skipped') => void;
   /** Species to introduce with a one-line card (first time a species appears). */
   readonly introSpecies?: readonly string[];
+  /** Saved reduced-motion preference ('system' follows the OS setting). */
+  readonly reducedMotionSetting?: 'system' | 'on' | 'off';
 }
 
 /** Keeps the last measured height; ignores sub-pixel jitter to avoid re-layout loops. */
@@ -99,6 +100,7 @@ export function PuzzleScreen({
   tutorial = false,
   onTutorialEnd,
   introSpecies = [],
+  reducedMotionSetting = 'system',
 }: PuzzleScreenProps) {
   const [state, send] = useReducer(screenReducer, undefined, () =>
     createScreenState(createSession(puzzle, initialGame), tutorial),
@@ -120,7 +122,7 @@ export function PuzzleScreen({
   const view = useMemo(() => derivePuzzleView(session), [session]);
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useReducedMotion(reducedMotionSetting);
   const [chromeHeight, onChromeLayout] = useMeasuredHeight();
   // The scroll viewport is measured only while the hint panel is closed; the open layout derives from it.
   const hintOpen = session.hint !== null;
@@ -171,6 +173,8 @@ export function PuzzleScreen({
   const onHint = useCallback(() => send({ type: hintOpen ? 'dismissHint' : 'requestHint' }), [hintOpen]);
   const onDismissHint = useCallback(() => send({ type: 'dismissHint' }), []);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  // "Play again" clears the board as one undoable move (no extra confirmation needed).
+  const onReplay = useCallback(() => send({ type: 'reset' }), []);
   const onConfirmReset = useCallback(() => {
     send({ type: 'reset' });
     setConfirmingReset(false);
@@ -222,7 +226,6 @@ export function PuzzleScreen({
     wasSolved.current = view.solved;
   }, [view.solved]);
 
-  const animals = useMemo(() => puzzle.species.map(speciesArt), [puzzle]);
   const { tool, game } = session;
 
   return (
@@ -288,13 +291,15 @@ export function PuzzleScreen({
         </View>
         {view.solved && (
           <SceneComplete
-            animals={animals}
+            animals={[]}
             reducedMotion={reducedMotion}
             title={STRINGS.completeTitle}
             message={STRINGS.completeMessage}
             nextLabel={STRINGS.next}
             backLabel={STRINGS.backToList}
             onBack={onBack}
+            replayLabel={STRINGS.playAgain}
+            onReplay={onReplay}
             {...(onNext ? { onNext } : {})}
           />
         )}
@@ -308,6 +313,8 @@ export function PuzzleScreen({
             cellSize={layout.cellSize}
             clueSize={layout.clueSize}
             onCellPress={onCellPress}
+            scene={view.solved}
+            reducedMotion={reducedMotion}
           />
         </View>
       </ScrollView>

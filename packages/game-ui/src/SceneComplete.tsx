@@ -16,6 +16,9 @@ export interface SceneCompleteProps {
   /** Omit when there is no next puzzle. */
   readonly onNext?: () => void;
   readonly onBack: () => void;
+  /** "Play again": clear the board and replay. */
+  readonly replayLabel?: string;
+  readonly onReplay?: () => void;
 }
 
 function HoppingAnimal({ art, delay, still }: { art: ArtSpec; delay: number; still: boolean }) {
@@ -58,6 +61,8 @@ export function SceneComplete({
   backLabel,
   onNext,
   onBack,
+  replayLabel,
+  onReplay,
 }: SceneCompleteProps) {
   return (
     <View style={styles.panel} testID="scene-complete" accessibilityLiveRegion="polite">
@@ -67,11 +72,13 @@ export function SceneComplete({
           {title}
         </Text>
       </View>
-      <View style={styles.animals}>
-        {animals.map((art, i) => (
-          <HoppingAnimal key={art.artKey} art={art} delay={i * 180} still={reducedMotion} />
-        ))}
-      </View>
+      {animals.length > 0 && (
+        <View style={styles.animals}>
+          {animals.map((art, i) => (
+            <HoppingAnimal key={art.artKey} art={art} delay={i * 180} still={reducedMotion} />
+          ))}
+        </View>
+      )}
       <Text style={styles.message}>{message}</Text>
       <View style={styles.actions}>
         {onNext && (
@@ -94,6 +101,17 @@ export function SceneComplete({
         >
           <Text style={styles.buttonText}>{backLabel}</Text>
         </Pressable>
+        {onReplay && replayLabel && (
+          <Pressable
+            testID="complete-replay"
+            onPress={onReplay}
+            accessibilityRole="button"
+            accessibilityLabel={replayLabel}
+            style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+          >
+            <Text style={styles.buttonText}>{replayLabel}</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

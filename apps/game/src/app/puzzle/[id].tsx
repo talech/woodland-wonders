@@ -40,6 +40,7 @@ export default function PuzzleRoute() {
       tutorial={tutorialMode}
       onTutorialEnd={() => store.updateSettings({ onboardingDone: true })}
       introSpecies={fresh ? newSpecies(level.id) : []}
+      reducedMotionSetting={save.data.settings.reducedMotion}
       {...(next ? { onNext: () => router.replace(`/puzzle/${next.id}`) } : {})}
     />
   );

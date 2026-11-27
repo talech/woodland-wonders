@@ -1,7 +1,7 @@
 /** @ww/game-ui — presentational, prop-driven React Native components (Board, Cell, Clue, Tray, Toolbar, art). */
 export { Art, type ArtProps, hasArt } from './art.tsx';
 export { Board, type BoardProps } from './Board.tsx';
-export { Cell, type CellProps } from './Cell.tsx';
+export { Cell, type CellProps, type CellScene } from './Cell.tsx';
 export { ClueLabel, type ClueLabelProps } from './ClueLabel.tsx';
 export { HintPanel, type HintPanelAction, type HintPanelProps, type HintPanelStep } from './HintPanel.tsx';
 export {
